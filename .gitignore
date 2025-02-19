@@ -80,3 +80,7 @@ docker/
 # .DS_Store
 .DS_Store
 */.DS_Store
+
+
+app/config/*.json
+# app/config/zalo-simulator-firebase-adminsdk.json
