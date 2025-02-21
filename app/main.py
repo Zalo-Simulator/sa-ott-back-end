@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi_sqlalchemy import DBSessionMiddleware
 from starlette.middleware.cors import CORSMiddleware
 
-from app.api.api_router import router
+from app.api.router.api_router import router
 from app.models import Base
 from app.db.base import engine
 from app.core.config import settings
