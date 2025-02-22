@@ -23,96 +23,167 @@ router = APIRouter()
 
 
 @router.get(
-    "", dependencies=[Depends(login_required)], response_model=Page[UserItemResponse]
-)
-def get(params: PaginationParams = Depends()) -> Any:
-    """
-    API Get list User
-    """
-    try:
-        _query = db.session.query(User)
-        users = paginate(model=User, query=_query, params=params)
-        return users
-    except Exception as e:
-        return HTTPException(status_code=400, detail=logger.error(e))
-
-
-@router.post(
-    "",
-    dependencies=[Depends(PermissionRequired("admin"))],
-    response_model=DataResponse[UserItemResponse],
-)
-def create(user_data: UserCreateRequest, user_service: UserService = Depends()) -> Any:
-    """
-    API Create User
-    """
-    try:
-        new_user = user_service.create_user(user_data)
-        return DataResponse().success_response(data=new_user)
-    except Exception:
-        raise UserError.CANNOT_CREATE_USER.as_http_exception()
-
-
-@router.get(
-    "/me",
+    "/{id}",
     dependencies=[Depends(login_required)],
     response_model=DataResponse[UserItemResponse],
 )
-def detail_me(current_user: User = Depends(UserService.get_current_user)) -> Any:
+def get_user(id: int, user_service: UserService = Depends()) -> Any:
     """
-    API get detail current User
-    """
-    return DataResponse().success_response(data=current_user)
-
-
-@router.put(
-    "/me",
-    dependencies=[Depends(login_required)],
-    response_model=DataResponse[UserItemResponse],
-)
-def update_me(
-    user_data: UserUpdateMeRequest,
-    current_user: User = Depends(UserService.get_current_user),
-    user_service: UserService = Depends(),
-) -> Any:
-    """
-    API Update current User
+    API Get User information
     """
     try:
-        updated_user = user_service.update_me(data=user_data, current_user=current_user)
-        return DataResponse().success_response(data=updated_user)
-    except Exception:
-        raise UserError.CANNOT_UPDATE_USER_ACCOUNT.as_http_exception()
-
-
-@router.get(
-    "/{user_id}",
-    dependencies=[Depends(login_required)],
-    response_model=DataResponse[UserItemResponse],
-)
-def detail(user_id: int, user_service: UserService = Depends()) -> Any:
-    """
-    API get Detail User
-    """
-    try:
-        return DataResponse().success_response(data=user_service.get(user_id))
+        return DataResponse().success_response(data=user_service.get(id))
     except Exception:
         raise UserError.CANNOT_GET_USER_DETAIL.as_http_exception()
 
 
 @router.put(
-    "/{user_id}",
-    dependencies=[Depends(PermissionRequired("admin"))],
+    "/{id}",
+    dependencies=[Depends(login_required)],
     response_model=DataResponse[UserItemResponse],
 )
-def update(
-    user_id: int, user_data: UserUpdateRequest, user_service: UserService = Depends()
+def update_user(
+    id: int, user_data: UserUpdateRequest, user_service: UserService = Depends()
 ) -> Any:
     """
-    API update User
+    API Update User information
     """
     try:
-        updated_user = user_service.update(user_id=user_id, data=user_data)
+        updated_user = user_service.update(user_id=id, data=user_data)
         return DataResponse().success_response(data=updated_user)
     except Exception:
         raise UserError.CANNOT_UPDATE_USER_ACCOUNT.as_http_exception()
+
+
+@router.get(
+    "/{id}/contacts",
+    dependencies=[Depends(login_required)],
+    response_model=DataResponse[list[UserItemResponse]],
+)
+def get_user_contacts(id: int, user_service: UserService = Depends()) -> Any:
+    """
+    API Get User's contacts
+    """
+    try:
+        contacts = user_service.get_contacts(id)
+        return DataResponse().success_response(data=contacts)
+    except Exception:
+        raise UserError.CANNOT_GET_USER_CONTACTS.as_http_exception()
+
+
+@router.post(
+    "/{id}/contacts/{user_id}",
+    dependencies=[Depends(login_required)],
+    response_model=DataResponse[UserItemResponse],
+)
+def add_contact(id: int, user_id: int, user_service: UserService = Depends()) -> Any:
+    """
+    API Add contact
+    """
+    try:
+        contact = user_service.add_contact(id, user_id)
+        return DataResponse().success_response(data=contact)
+    except Exception:
+        raise UserError.CANNOT_ADD_CONTACT.as_http_exception()
+
+
+@router.get(
+    "/{id}/groups",
+    dependencies=[Depends(login_required)],
+    response_model=DataResponse[list[Any]],
+)
+def get_user_groups(id: int, user_service: UserService = Depends()) -> Any:
+    """
+    API Get User's groups
+    """
+    try:
+        groups = user_service.get_groups(id)
+        return DataResponse().success_response(data=groups)
+    except Exception:
+        raise UserError.CANNOT_GET_USER_GROUPS.as_http_exception()
+
+
+@router.post(
+    "/groups",
+    dependencies=[Depends(PermissionRequired("admin"))],
+    response_model=DataResponse[Any],
+)
+def create_group(group_data: Any, user_service: UserService = Depends()) -> Any:
+    """
+    API Create new group
+    """
+    try:
+        new_group = user_service.create_group(group_data)
+        return DataResponse().success_response(data=new_group)
+    except Exception:
+        raise UserError.CANNOT_CREATE_GROUP.as_http_exception()
+
+
+@router.get(
+    "/groups/{id}",
+    dependencies=[Depends(login_required)],
+    response_model=DataResponse[Any],
+)
+def get_group(id: int, user_service: UserService = Depends()) -> Any:
+    """
+    API Get group information
+    """
+    try:
+        group = user_service.get_group(id)
+        return DataResponse().success_response(data=group)
+    except Exception:
+        raise UserError.CANNOT_GET_GROUP_DETAIL.as_http_exception()
+
+
+@router.put(
+    "/groups/{id}",
+    dependencies=[Depends(PermissionRequired("admin"))],
+    response_model=DataResponse[Any],
+)
+def update_group(
+    id: int, group_data: Any, user_service: UserService = Depends()
+) -> Any:
+    """
+    API Update group information
+    """
+    try:
+        updated_group = user_service.update_group(id, group_data)
+        return DataResponse().success_response(data=updated_group)
+    except Exception:
+        raise UserError.CANNOT_UPDATE_GROUP.as_http_exception()
+
+
+@router.post(
+    "/groups/{id}/members",
+    dependencies=[Depends(PermissionRequired("admin"))],
+    response_model=DataResponse[Any],
+)
+def add_group_member(
+    id: int, user_id: int, user_service: UserService = Depends()
+) -> Any:
+    """
+    API Add member to group
+    """
+    try:
+        member = user_service.add_group_member(id, user_id)
+        return DataResponse().success_response(data=member)
+    except Exception:
+        raise UserError.CANNOT_ADD_GROUP_MEMBER.as_http_exception()
+
+
+@router.delete(
+    "/groups/{id}/members/{user_id}",
+    dependencies=[Depends(PermissionRequired("admin"))],
+    response_model=DataResponse[Any],
+)
+def remove_group_member(
+    id: int, user_id: int, user_service: UserService = Depends()
+) -> Any:
+    """
+    API Remove member from group
+    """
+    try:
+        user_service.remove_group_member(id, user_id)
+        return DataResponse().success_response(data=None)
+    except Exception:
+        raise UserError.CANNOT_REMOVE_GROUP_MEMBER.as_http_exception()
