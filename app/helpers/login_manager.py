@@ -2,7 +2,7 @@ from fastapi import HTTPException, Depends
 
 from app.models import User
 from app.services.srv_user import UserService
-from exception.auth_error import AuthenticationError
+from app.exception.auth_error import AuthenticationError
 
 
 def login_required(

@@ -17,16 +17,18 @@ Base.metadata.create_all(bind=engine)
 
 def get_application() -> FastAPI:
     application = FastAPI(
-        title=settings.PROJECT_NAME, docs_url="/docs", redoc_url='/re-docs',
+        title="fastapi-base",
+        docs_url="/docs",
+        redoc_url="/re-docs",
         openapi_url=f"{settings.API_PREFIX}/openapi.json",
-        description='''
+        description="""
         Base frame with FastAPI micro framework + Postgresql
             - Login/Register with JWT
             - Permission
             - CRUD User
             - Unit testing with Pytest
             - Dockerize
-        '''
+        """,
     )
     application.add_middleware(
         CORSMiddleware,
@@ -43,5 +45,5 @@ def get_application() -> FastAPI:
 
 
 app = get_application()
-if __name__ == '__main__':
+if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

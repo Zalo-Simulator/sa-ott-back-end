@@ -1,6 +1,6 @@
 from http import HTTPStatus
 
-from exception.base_error import BaseError
+from app.exception.base_error import BaseError
 
 
 class UserError(BaseError):
