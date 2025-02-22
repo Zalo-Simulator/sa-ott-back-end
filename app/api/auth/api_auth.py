@@ -21,7 +21,7 @@ class LoginRequest(BaseModel):
     password: str = "secret123"
 
 
-@router.post("login", response_model=DataResponse[Token])
+@router.post("/login", response_model=DataResponse[Token])
 def login_access_token(form_data: LoginRequest, user_service: UserService = Depends()):
     user = user_service.authenticate(
         email=form_data.username, password=form_data.password
@@ -39,7 +39,7 @@ def login_access_token(form_data: LoginRequest, user_service: UserService = Depe
     })
 
 
-@router.post("register", response_model=DataResponse[UserItemResponse])
+@router.post("/register", response_model=DataResponse[UserItemResponse])
 def auth_register(
     register_data: UserRegisterRequest, user_service: UserService = Depends()
 ) -> Any:
@@ -48,6 +48,7 @@ def auth_register(
         return DataResponse().success_response(data=register_user)
     except Exception:
         raise AuthenticationError.CANNOT_REGISTER_ACCOUNT.as_http_exception()
+
 
 @router.post("/logout", response_model=DataResponse[Token])
 def auth_logout(form_data: LoginRequest, user_service: UserService = Depends()):
@@ -70,7 +71,9 @@ def auth_change_password(
 ):
     """change password api"""
     # Implement change password logic here
-    user_service.change_password(email=form_data.username, new_password=form_data.password)
+    user_service.change_password(
+        email=form_data.username, new_password=form_data.password
+    )
     return DataResponse().success_response({"message": "Password changed successfully"})
 
 
