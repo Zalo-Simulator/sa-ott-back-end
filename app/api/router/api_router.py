@@ -2,6 +2,7 @@ from fastapi import APIRouter
 
 from app.api.auth import api_auth
 from app.api.user import api_user
+from app.api.friend import api_friend
 from app.api.healthcheck import api_healthcheck
 
 
@@ -12,3 +13,4 @@ router.include_router(
 )
 router.include_router(api_auth.router, tags=["login"], prefix="/auth")
 router.include_router(api_user.router, tags=["user"], prefix="/users")
+router.include_router(api_friend.router, tags=["friend"], prefix="/friends")

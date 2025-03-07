@@ -13,3 +13,4 @@ class Group(BareBaseModel):
     visible = Column(Boolean, nullable=False)
     
     creator = relationship("User", back_populates="groups")
+    

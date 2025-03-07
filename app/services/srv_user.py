@@ -1,4 +1,5 @@
 import jwt
+import logging
 
 from typing import Optional
 from fastapi import Depends, HTTPException
@@ -18,7 +19,7 @@ from app.schemas.sche_user import (
     UserRegisterRequest,
 )
 
-
+logger = logging.getLogger()
 class UserService(object):
     __instance = None
 
@@ -28,16 +29,16 @@ class UserService(object):
     reusable_oauth2 = HTTPBearer(scheme_name="Authorization")
 
     @staticmethod
-    def authenticate(*, email: str, password: str) -> Optional[User]:
+    def authenticate(*, phone: str, password: str) -> Optional[User]:
         """
         Check username and password is correct.
         Return object User if correct, else return None
         """
-        user = db.session.query(User).filter_by(email=email).first()
+        user = db.session.query(User).filter(User.phone == phone).first()
         if not user:
-            return None
+            return "User not found"
         if not verify_password(password, user.hashed_password):
-            return None
+            return "Password is incorrect"
         return user
 
     @staticmethod
@@ -63,10 +64,18 @@ class UserService(object):
 
     @staticmethod
     def register_user(data: UserRegisterRequest):
-        exist_user = db.session.query(User).filter(User.email == data.email).first()
-        if exist_user:
+        exist_user_by_email = db.session.query(User).filter(User.email == data.email).first()
+        if exist_user_by_email:
+            logger.error(f"Email {data.email} already exists")
             raise AuthenticationError.EMAIL_ALREADY_EXIST.as_http_exception()
+
+        exist_user_by_phone = db.session.query(User).filter(User.phone == data.phone).first()
+        if exist_user_by_phone:
+            logger.error(f"Phone {data.phone} already exists")  # ✅ Corrected log message
+            raise AuthenticationError.PHONE_ALREADY_EXIST.as_http_exception()  # ✅ Use correct error
+
         register_user = User(
+            phone=data.phone,
             full_name=data.full_name,
             email=data.email,
             hashed_password=get_password_hash(data.password),
@@ -83,6 +92,7 @@ class UserService(object):
         if exist_user:
             raise AuthenticationError.EMAIL_ALREADY_EXIST.as_http_exception()
         new_user = User(
+            phone=data.phone,
             full_name=data.full_name,
             email=data.email,
             hashed_password=get_password_hash(data.password),

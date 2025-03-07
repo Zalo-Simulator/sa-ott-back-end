@@ -11,7 +11,7 @@ class UserBase(BaseModel):
     email: Optional[EmailStr] = None
     status: Optional[str] = 'Available'
     is_active: Optional[bool] = True
-    role: Optional[str] = UserRole.GUEST
+    role: Optional[str] = UserRole.USER
 
     class Config:
         orm_mode = True
@@ -40,15 +40,16 @@ class UserCreateRequest(UserBase):
     password: str
     email: EmailStr
     is_active: bool = True
-    role: UserRole = UserRole.GUEST
+    role: UserRole = UserRole.USER
 
 
 class UserRegisterRequest(BaseModel):
+    phone: str
     full_name: str
     email: EmailStr
     password: str
     avatar_url: Optional[str] = None
-    role: UserRole = UserRole.GUEST
+    role: UserRole = UserRole.USER
 
 
 class UserUpdateMeRequest(BaseModel):

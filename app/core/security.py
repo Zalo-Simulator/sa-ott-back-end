@@ -2,14 +2,14 @@ import jwt
 
 from typing import Any, Union
 from app.core.config import settings
-from datetime import datetime, timedelta
+import datetime
 from passlib.context import CryptContext
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 def create_access_token(user_id: Union[int, Any]) -> str:
-    expire = datetime.now(datetime.timezone.utc) + timedelta(
+    expire = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(
         seconds=settings.ACCESS_TOKEN_EXPIRE_SECONDS
     )
     to_encode = {

@@ -29,5 +29,5 @@ class TestRegister:
         assert r.status_code == 200
         response = r.json()
         assert response['code'] == '000'
-        assert response['message'] == 'Thành công'
+        assert response['message'] == 'successful'
         assert response['data']['email'] is not None

@@ -7,8 +7,9 @@ class AuthenticationError(BaseError):
     INVALID_USER_LOGIN = BaseError(
         status=HTTPStatus.UNAUTHORIZED,
         code=1000,
-        message="Incorrect email/phone or password",
+        message="Incorrect password",
     )
+    
     INACTIVE_USER = BaseError(
         status=HTTPStatus.UNAUTHORIZED,
         code=1001,
@@ -33,6 +34,11 @@ class AuthenticationError(BaseError):
         status=HTTPStatus.BAD_REQUEST,
         code=1005,
         message="Email already exist",
+    )
+    PHONE_ALREADY_EXIST = BaseError(
+        status=HTTPStatus.BAD_REQUEST,
+        code=1005,
+        message="Phone already exist",
     )
     USER_NOT_FOUND = BaseError(
         status=HTTPStatus.NOT_FOUND,
