@@ -138,3 +138,7 @@ class UserService(object):
         if exist_user is None:
             raise AuthenticationError.USER_NOT_FOUND.as_http_exception()
         return exist_user
+
+
+
+

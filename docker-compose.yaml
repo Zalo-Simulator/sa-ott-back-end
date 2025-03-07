@@ -14,6 +14,11 @@ services:
       - POSTGRES_PASSWORD=postgres
     ports:
       - "5433:5432"
+    healthcheck:
+      test: pg_isready -d postgres -U postgres
+      interval: 5s
+      timeout: 60s
+      retries: 5
     restart: unless-stopped
 
   alembic:
@@ -23,10 +28,13 @@ services:
       SECRET_KEY: ${SECRET_KEY}
     command: [ "alembic", "upgrade", "head" ]
     depends_on:
-      - db
+      db: 
+        condition: service_healthy
 
   app:
     image: fastapi-base:latest
+    volumes:
+      - .:/app
     environment:
       PROJECT_NAME: ${PROJECT_NAME}
       SQL_DATABASE_URL: 'postgresql+psycopg2://postgres:postgres@db:5432/postgres'
@@ -35,5 +43,6 @@ services:
       - "8000:8000"
     restart: unless-stopped
     depends_on:
-      - db
-      - alembic
+      db:
+        condition: service_healthy
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]

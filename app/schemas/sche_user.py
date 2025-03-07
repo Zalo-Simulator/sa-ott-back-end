@@ -66,16 +66,3 @@ class UserUpdateRequest(BaseModel):
     is_active: Optional[bool] = True
     role: Optional[UserRole]
 
-class FriendItemResponse(FriendBase):
-    id: int
-    user_id: str
-    friend_id: EmailStr
-    status: str
-
-class FriendCreateRequest(FriendBase):
-    user_id: str
-    friend_id: EmailStr
-    status: str
-    friend_nick_name: str
-
-
