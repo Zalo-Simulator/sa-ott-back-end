@@ -25,9 +25,15 @@ class FriendBase(BaseModel):
     class Config:
         orm_mode = True
 
-
-class UserItemResponse(UserBase):
+class UserItemResponse(BaseModel):
     id: int
+    full_name: str
+    is_active: bool
+    role: str
+
+class UserDetailItemResponse(UserBase):
+    id: int
+    phone: str
     full_name: str
     email: EmailStr
     is_active: bool

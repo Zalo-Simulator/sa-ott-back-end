@@ -38,3 +38,9 @@ class FriendError(BaseError):
         code=1204,
         message="Friend request existed",
     )
+
+    USER_NOT_FOUND = BaseError(
+        status=HTTPStatus.BAD_REQUEST,
+        code=1205,
+        message="User not found",
+    )

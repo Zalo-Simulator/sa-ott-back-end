@@ -13,6 +13,7 @@ from app.core.config import settings
 from app.core.security import verify_password, get_password_hash
 from app.schemas.sche_token import TokenPayload
 from app.schemas.sche_user import (
+    UserItemResponse,
     UserCreateRequest,
     UserUpdateMeRequest,
     UserUpdateRequest,
@@ -143,12 +144,23 @@ class UserService(object):
         return user
 
     @staticmethod
-    def get(user_id):
+    def get_detail(user_id):
         exist_user = db.session.query(User).get(user_id)
         if exist_user is None:
             raise AuthenticationError.USER_NOT_FOUND.as_http_exception()
         return exist_user
 
+    @staticmethod
+    def get(user_id):
+        exist_user = db.session.query(User).get(user_id)
+        if exist_user is None:
+            raise AuthenticationError.USER_NOT_FOUND.as_http_exception()
+        return UserItemResponse(
+            id=exist_user.id,
+            full_name=exist_user.full_name,
+            is_active=exist_user.is_active,
+            role=exist_user.role,
+        )
 
 
 

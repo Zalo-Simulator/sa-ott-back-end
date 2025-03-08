@@ -1,9 +1,10 @@
 import logging
 
+import requests
 from fastapi_sqlalchemy import db
 
 from app.models.model_friend import Friend
-
+from app.api.constants import USER_API_URL
 from app.schemas.sche_friend import (
     FriendSchemaResponse,
     CreateFriendRequest,
@@ -51,6 +52,12 @@ class FriendService(object):
         if exist_friend is not None:
             logger.error("Friend request existed")
             raise FriendError.FRIEND_REQUEST_EXISTED.as_http_exception()
+        if params.friend_nick_name is None:
+            response = requests.get(USER_API_URL + f"/{params.friend_id}")
+            if response.status_code == 200:
+                params.friend_nick_name = response.json().get("data").get("full_name")
+            else:
+                raise FriendError.USER_NOT_FOUND.as_http_exception()
         new_friend_request = Friend(
             user_id=params.user_id,
             friend_id=params.friend_id,
