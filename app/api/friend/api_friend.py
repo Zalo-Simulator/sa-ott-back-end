@@ -10,7 +10,9 @@ from app.helpers.paging import Page, PaginationParams, paginate
 from app.schemas.sche_base import DataResponse
 from app.schemas.sche_friend import (
     FriendSchemaResponse,
-    CreateFriendRequest
+    CreateFriendRequest,
+    UpdateFriendRequest
+    
 )
 from app.services.srv_friend import FriendService
 from app.models import Friend
@@ -73,13 +75,13 @@ def create(
         raise e.as_http_exception()
     
 @router.put(
-    "/{id}",
+    "/{friend_id}",
     dependencies=[Depends(login_required)],
     response_model=DataResponse[FriendSchemaResponse],
 )
 def update(
     friend_id: int,
-    params: CreateFriendRequest,
+    params: UpdateFriendRequest,
     friend_service: FriendService = Depends()
 ) -> Any:
     """

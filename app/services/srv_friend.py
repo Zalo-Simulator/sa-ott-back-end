@@ -40,6 +40,7 @@ class FriendService(object):
         if friends is None:
             raise FriendError.CANNOT_GET_FRIEND_LIST.as_http_exception()
         return [FriendSchemaResponse(
+            id = friend.id,
             user_id=friend.user_id,
             friend_id=friend.friend_id,
             status=friend.status,
@@ -67,6 +68,7 @@ class FriendService(object):
         db.session.add(new_friend_request)
         db.session.commit()
         return FriendSchemaResponse(
+            id=new_friend_request.id,
             user_id=new_friend_request.user_id,
             friend_id=new_friend_request.friend_id,
             status=new_friend_request.status,
@@ -75,7 +77,7 @@ class FriendService(object):
 
     @staticmethod
     def update_friend_request(friend_id: int, params: UpdateFriendRequest):
-        current_friend = db.session.query(Friend).get(friend_id)
+        current_friend  = db.session.query(Friend).filter_by(id=friend_id).first()
         if current_friend is None:
             raise FriendError.CANNOT_GET_FRIEND_LIST.as_http_exception()
         current_friend.user_id = params.user_id if params.user_id else current_friend.user_id
@@ -84,6 +86,7 @@ class FriendService(object):
         current_friend.friend_nick_name = params.friend_nick_name if params.friend_nick_name else current_friend.friend_nick_name
         db.session.commit()
         return current_friend
+
 
     @staticmethod
     def delete_friend_request(friend_id: int):

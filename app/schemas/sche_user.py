@@ -16,14 +16,7 @@ class UserBase(BaseModel):
     class Config:
         orm_mode = True
 
-class FriendBase(BaseModel):
-    user_id: Optional[str] = None
-    friend_id: Optional[EmailStr] = None
-    status: Optional[str] = 'Available'
-    friend_nick_name: Optional[bool] = True
 
-    class Config:
-        orm_mode = True
 
 class UserItemResponse(BaseModel):
     id: int
