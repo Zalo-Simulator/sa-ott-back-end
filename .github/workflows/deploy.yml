@@ -32,7 +32,7 @@ jobs:
           echo "$PRIVATE_KEY" > private_key.pem
           chmod 600 private_key.pem
 
-          ssh -o StrictHostKeyChecking=no -i private_key.pem $USER@$HOST << 'EOF'
+          ssh -t -o StrictHostKeyChecking=no -i private_key.pem $USER@$HOST << 'EOF'
             cd ~/backend
             git pull origin main
             docker compose down
