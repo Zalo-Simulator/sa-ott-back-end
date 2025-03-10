@@ -41,3 +41,25 @@ jobs:
         run: |
           docker build -t ${{ env.DOCKER_REPO }}:${{ env.IMAGE_TAG }} ${{ env.WORKING_DIRECTORY }}
           docker push ${{ env.DOCKER_REPO }}:${{ env.IMAGE_TAG }}
+
+      - name: Deploy to EC2
+        run: |
+          echo "${{ env.PRIVATE_KEY }}" > private_key.pem
+          chmod 600 private_key.pem
+          
+          ssh -o StrictHostKeyChecking=no -i private_key.pem ${{ env.USER }}@${{ env.HOST }} << 'EOF'
+            echo "Logging into AWS ECR..."
+            aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin ${{ env.DOCKER_REPO }}
+            
+            echo "Pulling latest image..."
+            docker pull ${{ env.IMAGE_URI }}
+            
+            echo "Stopping old container..."
+            docker stop backend || true
+            docker rm backend || true
+            
+            echo "Running new container..."
+            docker run -d --name backend -p 8000:8000 --restart unless-stopped ${{ env.IMAGE_URI }}
+          EOF
+          
+          rm -f private_key.pem
