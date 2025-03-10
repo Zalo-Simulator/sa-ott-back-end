@@ -44,34 +44,46 @@ jobs:
 
       - name: Build and Push the Docker Image
         run: |
+          echo "IMAGE_URI=${{ env.DOCKER_REPO }}:${{ env.IMAGE_TAG }}" >> $GITHUB_ENV
           docker build -t $IMAGE_URI $WORKING_DIRECTORY
           docker push $IMAGE_URI
-      
+          
       - name: Deploy to EC2
         run: |
           echo "$PRIVATE_KEY" > private_key.pem
           chmod 600 private_key.pem
-          
-          ssh -o StrictHostKeyChecking=no -i private_key.pem $USER@$HOST << 'EOF'
+
+          ssh -o StrictHostKeyChecking=no -i private_key.pem $USER@$HOST << EOF
+            export AWS_REGION=${{ env.AWS_REGION }}
+            export DOCKER_REPO=${{ env.DOCKER_REPO }}
+            export IMAGE_URI=${{ env.DOCKER_REPO }}:${{ env.IMAGE_TAG }}
+
             echo "Updating system and installing dependencies..."
+            
             sudo apt update -y
-            sudo apt install -y awscli docker.io
+
+            # Install AWS CLI
+            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+            unzip awscliv2.zip
+            sudo ./aws/install
+
+            sudo apt install -y docker.io
             sudo systemctl start docker
             sudo systemctl enable docker
             sudo usermod -aG docker $USER
-            
+
             echo "Logging into AWS ECR..."
-            aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $DOCKER_REPO
-            
+            aws ecr get-login-password --region \$AWS_REGION | docker login --username AWS --password-stdin \$DOCKER_REPO
+
             echo "Pulling the latest image..."
-            docker pull $IMAGE_URI
-            
+            docker pull \$IMAGE_URI
+
             echo "Stopping and removing old container..."
             docker stop backend || true
             docker rm backend || true
-            
+
             echo "Running new container..."
-            docker run -d --name backend -p 8000:8000 --restart unless-stopped $IMAGE_URI
+            docker run -d --name backend -p 8000:8000 --restart unless-stopped \$IMAGE_URI
           EOF
-          
+
           rm -f private_key.pem
