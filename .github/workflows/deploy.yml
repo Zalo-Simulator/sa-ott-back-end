@@ -41,15 +41,3 @@ jobs:
         run: |
           docker build -t ${{ env.DOCKER_REPO }}:${{ env.IMAGE_TAG }} ${{ env.WORKING_DIRECTORY }}
           docker push ${{ env.DOCKER_REPO }}:${{ env.IMAGE_TAG }}
-
-      - name: SSH into EC2 and Deploy
-        run: |
-          echo "$PRIVATE_KEY" > private_key.pem
-          chmod 600 private_key.pem
-
-          ssh -t -o StrictHostKeyChecking=no -i private_key.pem $USER@$HOST << 'EOF'
-            cd ~/backend
-            git pull origin main
-            docker compose down
-            docker compose up -d --build
-          EOF
