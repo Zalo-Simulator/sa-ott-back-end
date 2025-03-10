@@ -41,6 +41,17 @@ jobs:
         run: |
           docker build -t ${{ env.DOCKER_REPO }}:${{ env.IMAGE_TAG }} ${{ env.WORKING_DIRECTORY }}
           docker push ${{ env.DOCKER_REPO }}:${{ env.IMAGE_TAG }}
+      
+      - name: Install AWS CLI & Docker on EC2
+        run: |
+          ssh -o StrictHostKeyChecking=no -i private_key.pem ${{ env.USER }}@${{ env.HOST }} << 'EOF'
+            echo "Installing AWS CLI & Docker..."
+            sudo apt update -y
+            sudo apt install -y awscli docker.io
+            sudo systemctl start docker
+            sudo systemctl enable docker
+            sudo usermod -aG docker $USER
+          EOF
 
       - name: Deploy to EC2
         run: |
@@ -48,6 +59,13 @@ jobs:
           chmod 600 private_key.pem
           
           ssh -o StrictHostKeyChecking=no -i private_key.pem ${{ env.USER }}@${{ env.HOST }} << 'EOF'
+            echo "Installing AWS CLI & Docker..."
+            sudo apt update -y
+            sudo apt install -y awscli docker.io
+            sudo systemctl start docker
+            sudo systemctl enable docker
+            sudo usermod -aG docker $USER
+            
             echo "Logging into AWS ECR..."
             aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin ${{ env.DOCKER_REPO }}
             
