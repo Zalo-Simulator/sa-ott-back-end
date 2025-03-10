@@ -11,7 +11,7 @@ env:
   AWS_REGION: ${{ secrets.AWS_REGION }}
   PRIVATE_KEY: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
   HOST: ${{ secrets.EC2_PUBLIC_IP }}
-  USER: "ubuntu"
+  USER: ${{ secrets.EC2_SSH_USER }}
 
 jobs:
   deploy-backend:
