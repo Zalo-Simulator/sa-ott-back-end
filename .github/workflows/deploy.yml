@@ -44,6 +44,9 @@ jobs:
       
       - name: Install AWS CLI & Docker on EC2
         run: |
+          echo "${{ env.PRIVATE_KEY }}" > private_key.pem
+          chmod 600 private_key.pem
+          
           ssh -o StrictHostKeyChecking=no -i private_key.pem ${{ env.USER }}@${{ env.HOST }} << 'EOF'
             echo "Installing AWS CLI & Docker..."
             sudo apt update -y
