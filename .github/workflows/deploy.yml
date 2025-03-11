@@ -61,34 +61,30 @@ jobs:
             export AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
             export AWS_REGION=${{ secrets.AWS_REGION }}
 
-
             echo "Updating system and installing dependencies..."
             sudo apt update -y
 
             echo "Installing AWS CLI..."
-            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-            unzip awscliv2.zip
-            sudo ./aws/install
-            export PATH=$PATH:/usr/local/bin/aws
+            sudo snap install aws-cli --classic
 
             echo "Installing Docker..."
             curl -fsSL https://get.docker.com -o get-docker.sh
             sudo sh get-docker.sh
-            sudo usermod -aG docker \$USER
+            sudo usermod -aG docker $USER
             newgrp docker
 
             echo "Logging into AWS ECR..."
-            aws ecr get-login-password --region \$AWS_REGION | docker login --username AWS --password-stdin \$DOCKER_REPO
+            aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $DOCKER_REPO
 
             echo "Pulling the latest image..."
-            docker pull \$IMAGE_URI
+            docker pull $IMAGE_URI
 
             echo "Stopping and removing old container..."
             docker stop backend || true
             docker rm backend || true
 
             echo "Running new container..."
-            docker run -d --name backend -p 8000:8000 --restart unless-stopped \$IMAGE_URI
+            docker run -d --name backend -p 8000:8000 --restart unless-stopped $IMAGE_URI
           EOF
 
 
