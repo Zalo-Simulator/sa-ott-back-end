@@ -24,20 +24,24 @@ services:
 
   alembic:
     image: fastapi-base:latest
+    user: root  # Chạy container với user root
     environment:
-      SQL_DATABASE_URL: 'postgresql+psycopg2://postgres:postgres@db:5454/postgres'
-      SECRET_KEY: ${SECRET_KEY}
-    command: ["python", "-m", "alembic", "upgrade", "head"]
+      SQL_DATABASE_URL: "postgresql+psycopg2://postgres:postgres@db:5432/postgres"
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        pip install --no-cache-dir -r requirements.txt &&
+        alembic upgrade head
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 
   app:
     image: fastapi-base:latest
     container_name: fastapi_app
+    user: root  # Chạy với quyền root
     environment:
-      PROJECT_NAME: ${PROJECT_NAME}
       SQL_DATABASE_URL: "postgresql+psycopg2://postgres:postgres@db:5432/postgres"
-      SECRET_KEY: ${SECRET_KEY}
     ports:
       - "8000:8000"
     restart: unless-stopped

@@ -1,37 +1,21 @@
-# Sử dụng Python 3.9 lightweight image
-FROM python:3.9-slim-bullseye
+# Sử dụng Python base image
+FROM python:3.10
 
-# Thiết lập biến môi trường
-ENV PYTHONUNBUFFERED=1 \
-    PIP_NO_CACHE_DIR=off \
-    PIP_DISABLE_PIP_VERSION_CHECK=on \
-    PIP_DEFAULT_TIMEOUT=100
-
-# Định nghĩa thư mục làm việc
+# Đặt thư mục làm việc
 WORKDIR /app
 
-# Cài đặt dependencies
+# Copy file requirements.txt và cài đặt dependencies
 COPY requirements.txt .
-RUN apt-get update && apt-get install -y --no-install-recommends gcc && \
-    python -m venv /venv && \
-    /venv/bin/pip install --upgrade pip && \
-    /venv/bin/pip install -r requirements.txt && \
-    apt-get remove -y gcc && apt-get autoremove -y && \
-    rm -rf /var/lib/apt/lists/*
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy source code
+# Đảm bảo Alembic được cài đặt
+RUN pip install alembic
+
+# Copy toàn bộ mã nguồn vào container
 COPY . .
 
-# Tạo user không có quyền root để tăng bảo mật
-RUN groupadd --gid 1000 app_group && \
-    useradd --system --uid 1000 --gid app_group app_user && \
-    chown -R app_user:app_group /app
+# Chạy ứng dụng dưới quyền root
+USER root
 
-# Chạy dưới user không phải root
-USER app_user
-
-# Mở port 8000
-EXPOSE 8000
-
-# Chạy ứng dụng
-CMD ["/venv/bin/uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Lệnh mặc định chạy FastAPI
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
