@@ -33,5 +33,7 @@ USER app_user
 # Mở port 8000
 EXPOSE 8000
 
+ENV SQL_DATABASE_URL="postgresql+psycopg2://postgres:postgres@db:5432/postgres"
+
 # Chạy ứng dụng
 CMD ["/venv/bin/uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
