@@ -6,86 +6,51 @@ on:
       - main
 
 env:
-  # AWS Credentials
-  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-  AWS_REGION: ${{ secrets.AWS_REGION }}
-
-  # EC2 Credentials
   PRIVATE_KEY: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
   HOST: ${{ secrets.EC2_PUBLIC_IP }}
   USER: "ubuntu"
-
-  # Docker & GitHub Vars
-  WORKING_DIRECTORY: ${{ github.workspace }}
-  IMAGE_TAG: ${{ github.sha }}
-  DOCKER_REPO: ${{ vars.DOCKER_REPO_DEV }}
+  REPO_URL: "git@github.com:${{ github.repository }}.git"
+  PROJECT_DIR: "/home/ubuntu/app"
 
 jobs:
-  deploy-backend:
+  deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
-      
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
-
-      - name: Prepare Docker Image Tag
-        run: echo "IMAGE_URI=${{ env.DOCKER_REPO }}:${{ env.IMAGE_TAG }}" >> $GITHUB_ENV
-
-      - name: Build and Push the Docker Image
-        run: |
-          echo "IMAGE_URI=${{ env.DOCKER_REPO }}:${{ env.IMAGE_TAG }}" >> $GITHUB_ENV
-          docker build -t $IMAGE_URI $WORKING_DIRECTORY
-          docker push $IMAGE_URI
-
-      - name: Deploy to EC2
+      - name: SSH into EC2 and deploy
         run: |
           echo "$PRIVATE_KEY" > private_key.pem
           chmod 600 private_key.pem
 
-          ssh -o StrictHostKeyChecking=no -i private_key.pem $USER@$HOST << EOF
-            export AWS_REGION=${{ env.AWS_REGION }}
-            export DOCKER_REPO=${{ env.DOCKER_REPO }}
-            export IMAGE_URI=${{ env.DOCKER_REPO }}:${{ env.IMAGE_TAG }}
-            export AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
-            export AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
-            export AWS_REGION=${{ secrets.AWS_REGION }}
-
-            echo "Updating system and installing dependencies..."
+          ssh -o StrictHostKeyChecking=no -i private_key.pem $USER@$HOST << 'EOF'
+            echo "Updating system packages..."
             sudo apt update -y
-
-            echo "Installing AWS CLI..."
-            sudo snap install aws-cli --classic
 
             echo "Installing Docker..."
             curl -fsSL https://get.docker.com -o get-docker.sh
             sudo sh get-docker.sh
             sudo usermod -aG docker $USER
-            newgrp docker
 
-            echo "Logging into AWS ECR..."
-            aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $DOCKER_REPO
+            echo "Installing Docker Compose..."
+            sudo apt install -y docker-compose
 
-            echo "Pulling the latest image..."
-            docker pull $IMAGE_URI
+            echo "Cloning or updating the repository..."
+            if [ ! -d "$PROJECT_DIR" ]; then
+              git clone $REPO_URL $PROJECT_DIR
+            else
+              cd $PROJECT_DIR
+              git pull origin main
+            fi
 
-            echo "Stopping and removing old container..."
-            docker stop backend || true
-            docker rm backend || true
+            cd $PROJECT_DIR
 
-            echo "Running new container..."
-            docker run -d --name backend -p 8000:8000 --restart unless-stopped $IMAGE_URI
+            echo "Starting Docker Compose..."
+            docker-compose down
+            docker-compose up -d --build
+
+            echo "Deployment complete!"
           EOF
-
 
           rm -f private_key.pem
