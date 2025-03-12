@@ -49,7 +49,8 @@ jobs:
 
             echo "Starting Docker Compose..."
             docker-compose down
-            docker-compose up -d --build
+            docker build -t fastapi-base:latest .
+            docker-compose up -d
 
             echo "Deployment complete!"
           EOF
