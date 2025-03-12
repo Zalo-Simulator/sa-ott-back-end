@@ -40,6 +40,7 @@ jobs:
             if [ ! -d "$PROJECT_DIR" ]; then
               git clone $REPO_URL $PROJECT_DIR
             else
+              echo "Cannot clone the repository because the directory already exists. Pulling instead..."
               cd $PROJECT_DIR
               git pull origin main
             fi
