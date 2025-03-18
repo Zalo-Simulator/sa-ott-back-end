@@ -19,12 +19,27 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      - name: Create environment file
+        run: |
+          echo "REPO_URL=${{ env.REPO_URL }}" > .env
+          echo "PROJECT_DIR=${{ env.PROJECT_DIR }}" >> .env
+      
+      - name: Upload environment file to EC2
+        run: |
+          echo "$PRIVATE_KEY" > private_key.pem
+          chmod 600 private_key.pem
+          scp -o StrictHostKeyChecking=no -i private_key.pem .env $USER@$HOST:/home/ubuntu/app/.env
+          rm -f private_key.pem .env
+      
       - name: SSH into EC2 and deploy
         run: |
           echo "$PRIVATE_KEY" > private_key.pem
           chmod 600 private_key.pem
-
-          ssh -o StrictHostKeyChecking=no -i private_key.pem $USER@$HOST << 'EOF'
+      
+          ssh -o StrictHostKeyChecking=no -i private_key.pem $USER@$HOST << EOF
+            export $(cat /home/ubuntu/app/.env | xargs)
+            cd /home/ubuntu/app
+            
             echo "Updating system packages..."
             sudo apt update -y
 
@@ -45,14 +60,12 @@ jobs:
               git pull origin main
             fi
 
-            cd $PROJECT_DIR
-
             echo "Starting Docker Compose..."
             docker-compose down
             docker build -t fastapi-base:latest .
             docker-compose up -d
-
+      
             echo "Deployment complete!"
           EOF
-
+      
           rm -f private_key.pem
