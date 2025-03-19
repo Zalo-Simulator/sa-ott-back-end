@@ -28,10 +28,19 @@ $ uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 **Using Docker** 
 - Clone Project
-- Run docker-compose
+- Build Dockerfile
+```bash
+docker build -t fastapi-base:latest .
 ```
-$ docker build -t fastapi-base:latest .
-$ docker-compose up -d
+- Init s3 bucket
+```bash
+./scripts/s3_bootstrap.sh
+```
+
+- Run docker-compose
+```bash
+export AWS_S3_ENDPOINT=http://localhost.localstack.cloud:4566
+docker-compose up -d
 ```
 
 ## Project's structure

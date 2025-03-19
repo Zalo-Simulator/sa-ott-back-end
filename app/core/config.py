@@ -7,14 +7,19 @@ BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
 load_dotenv(os.path.join(BASE_DIR, ".env"))
 
 
-class S3DetailSettings(BaseSettings):
-    bucket: str
+class S3PrivateSettings(BaseSettings):
+    bucket: str = "zalo-private-test"
+    presigned_url_expiration: int = 300  # 5 minutes
+
+
+class S3PublicSettings(BaseSettings):
+    bucket: str = "zalo-public-test"
     presigned_url_expiration: int = 300  # 5 minutes
 
 
 class S3Settings(BaseSettings):
-    private: S3DetailSettings
-    public: S3DetailSettings
+    private: S3PrivateSettings = S3PrivateSettings()
+    public: S3PublicSettings = S3PublicSettings()
 
 
 class AWSConfig(BaseSettings):

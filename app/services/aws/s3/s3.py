@@ -1,7 +1,7 @@
 import io
 import os
 import uuid
-from typing import BinaryIO
+from typing import BinaryIO, Union
 
 import boto3
 from botocore.exceptions import BotoCoreError, ClientError
@@ -15,7 +15,7 @@ from app.helpers.logging import logger
 
 
 class S3Service:
-    def __init__(self, bucket) -> None:
+    def __init__(self, bucket: str = None) -> None:
         self.region = settings.aws.AWS_REGION
         self.s3 = boto3.client(
             "s3",
@@ -23,6 +23,9 @@ class S3Service:
             endpoint_url=settings.aws.AWS_S3_ENDPOINT,
             **aws_credentials_dummy,
         )
+        if bucket is None:
+            # default is private
+            bucket = "zalo-private-test"
         self.bucket = bucket
         self.string_helper = StringUtils()
 
@@ -38,7 +41,7 @@ class S3Service:
         return f"{prefix}/{user_id}/{file_name}"
 
     def _upload_file_obj(
-        self, file_obj: UploadFile | BinaryIO, key: str, is_public: bool = False
+        self, file_obj: Union[UploadFile, BinaryIO], key: str, is_public: bool = False
     ):
         try:
             self.s3.upload_fileobj(
@@ -56,9 +59,9 @@ class S3Service:
 
     def upload(
         self,
-        file: UploadFile | BinaryIO,
+        file: Union[UploadFile, BinaryIO],
         user_id: uuid.UUID,
-        key: str | None = None,
+        key: Union[str, None] = None,
         prefix: str = "documents",
         origin_file_name: bool = True,
         is_public: bool = False,
@@ -88,7 +91,7 @@ class S3Service:
         self,
         file_path: str,
         user_id: uuid.UUID,
-        key: str | None = None,
+        key: Union[str, None] = None,
         prefix: str = "documents",
         origin_file_name: bool = True,
         is_public: bool = False,
@@ -178,7 +181,7 @@ class S3Service:
             logger.error(e)
 
     def generate_s3_url(
-        self, key: str, expiration: int | None = None, is_public: bool = False
+        self, key: str, expiration: Union[int, None] = None, is_public: bool = False
     ):
         try:
             if is_public is False:
