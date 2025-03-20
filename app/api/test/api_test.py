@@ -1,15 +1,14 @@
 import uuid
 from typing import Any
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, File, Form, UploadFile
 
 from app.api.test.schema_test import (
     FileDownloadRequest,
     FileDownloadResponse,
-    FileUploadRequest,
     FileUploadResponse,
-    GetPublicFileUrlResponse,
     GetPublicFileUrlRequest,
+    GetPublicFileUrlResponse,
 )
 from app.core.config import settings
 from app.exception.zalo_error import ZaloError
@@ -22,10 +21,14 @@ router = APIRouter()
 
 @router.post("/upload", response_model=DataResponse[FileUploadResponse])
 def test_upload_file(
-    payload: FileUploadRequest, s3_service: S3Service = Depends()
+    user_id: str = Form(..., min_length=1, max_length=50),
+    is_public: bool = False,
+    file: UploadFile = File(...),
+    s3_service: S3Service = Depends(),
 ) -> Any:
+    # Không thể để UploadFile trong BaseModel vì nó không phải là kiểu JSON.
     try:
-        s3_key = s3_service.upload(file=payload.file, user_id=payload.user_id)
+        s3_key = s3_service.upload(file=file, user_id=user_id, is_public=is_public)
         s3_object = S3DocumentSchema(s3_key=s3_key, document_id=uuid.uuid4())
         return DataResponse().success_response(data=s3_object)
     except Exception:

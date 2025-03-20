@@ -1,11 +1,4 @@
 from pydantic import BaseModel, Field
-from fastapi import UploadFile, File
-
-
-class FileUploadRequest(BaseModel):
-    file: UploadFile = File(...)
-    user_id: str = Field(..., min_length=1, max_length=50)
-    is_public: bool = False
 
 
 class FileDownloadRequest(BaseModel):

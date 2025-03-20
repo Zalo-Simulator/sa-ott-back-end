@@ -10,14 +10,18 @@ ENV PYTHONUNBUFFERED=1 \
 # Định nghĩa thư mục làm việc
 WORKDIR /app
 
-# Cài đặt dependencies
+# Copy requirements file
 COPY requirements.txt .
-RUN apt-get update && apt-get install -y --no-install-recommends gcc && \
+
+# Install dependencies, set up virtual environment, install awscli
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends gcc python3-venv awscli && \
     python -m venv /venv && \
     /venv/bin/pip install --upgrade pip && \
     /venv/bin/pip install -r requirements.txt && \
     apt-get remove -y gcc && apt-get autoremove -y && \
     rm -rf /var/lib/apt/lists/*
+
 
 # Copy source code
 COPY . .

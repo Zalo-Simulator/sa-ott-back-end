@@ -15,7 +15,7 @@ from app.helpers.logging import logger
 
 
 class S3Service:
-    def __init__(self, bucket: str = None) -> None:
+    def __init__(self, bucket: str = settings.aws.s3.private.bucket) -> None:
         self.region = settings.aws.AWS_REGION
         self.s3 = boto3.client(
             "s3",

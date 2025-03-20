@@ -1,28 +1,28 @@
 import os
 import tempfile
 from dotenv import load_dotenv
-from pydantic import BaseSettings
+from pydantic import BaseModel
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
 load_dotenv(os.path.join(BASE_DIR, ".env"))
 
 
-class S3PrivateSettings(BaseSettings):
+class S3PrivateSettings(BaseModel):
     bucket: str = "zalo-private-test"
     presigned_url_expiration: int = 300  # 5 minutes
 
 
-class S3PublicSettings(BaseSettings):
+class S3PublicSettings(BaseModel):
     bucket: str = "zalo-public-test"
     presigned_url_expiration: int = 300  # 5 minutes
 
 
-class S3Settings(BaseSettings):
+class S3Settings(BaseModel):
     private: S3PrivateSettings = S3PrivateSettings()
     public: S3PublicSettings = S3PublicSettings()
 
 
-class AWSConfig(BaseSettings):
+class AWSConfig(BaseModel):
     AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID", "")
     AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY", "")
     AWS_REGION = os.getenv("AWS_REGION", "")
@@ -31,7 +31,7 @@ class AWSConfig(BaseSettings):
     s3: S3Settings = S3Settings()
 
 
-class Settings(BaseSettings):
+class Settings(BaseModel):
     PROJECT_NAME = os.getenv("PROJECT_NAME", "FASTAPI BASE")
     SECRET_KEY = os.getenv("SECRET_KEY", "")
     API_PREFIX = ""

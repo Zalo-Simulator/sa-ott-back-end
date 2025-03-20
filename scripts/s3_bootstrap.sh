@@ -1,18 +1,25 @@
 #!/bin/bash
 
-echo "Creating S3 buckets..."
+REGION="us-east-1"
+BUCKET_NAME_PUBLIC="zalo-public-test"
+BUCKET_NAME_PRIVATE="zalo-private-test"
 
-set -euo pipefail
+create_bucket_if_not_exists() {
+    local bucket_name=$1
+    # Check if bucket already exists
+    bucket_exists=$(awslocal s3 ls | grep "$bucket_name")
+    if [ -z "$bucket_exists" ]; then
+        # Bucket does not exist, create it
+        awslocal s3 mb s3://$bucket_name --region $REGION
+        echo "Bucket $bucket_name created."
+    else
+        echo "Bucket $bucket_name already exists."
+    fi
+}
 
-buckets=(
-  "zalo-private-test"
-  "zalo-public-test"
-)
+create_bucket_if_not_exists $BUCKET_NAME_PUBLIC
+create_bucket_if_not_exists $BUCKET_NAME_PRIVATE
 
-# Endpoint URL for LocalStack
-endpoint_url="http://localhost:4566"
-
-# Localstack rules
 echo '
 {
     "CORSRules": [
@@ -23,12 +30,8 @@ echo '
         }
     ]
 }' > cors-config.json
-
-for bucket_name in "${buckets[@]}"; do
-    awslocal --endpoint-url="$endpoint_url" s3api create-bucket --bucket "$bucket_name"
-    awslocal s3api put-bucket-cors --bucket "$bucket_name" --cors-configuration file://cors-config.json
-    awslocal s3api get-bucket-cors --bucket "$bucket_name"
-done
+awslocal s3api put-bucket-cors --bucket $BUCKET_NAME_PUBLIC --cors-configuration file://cors-config.json
+awslocal s3api put-bucket-cors --bucket $BUCKET_NAME_PRIVATE --cors-configuration file://cors-config.json
 
 # Clean up CORS configuration file
 rm cors-config.json

@@ -19,6 +19,9 @@ services:
       retries: 5
       timeout: 5s
     restart: unless-stopped
+    networks:
+      - zalo_net
+
 
   alembic:
     image: fastapi-base:latest
@@ -33,13 +36,40 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    networks:
+      - zalo_net
+        
+
+  localstack:
+    container_name: zalo_localstack
+    image: localstack/localstack
+    ports:
+      - 4576:4576
+      - 4572:4572
+      - 4566:4566
+    environment:
+      - DEBUG=${DEBUG:-0}
+      - SERVICES=s3
+      - EDGE_PORT=4566
+    volumes:
+      - localstack_data:/var/lib/localstack
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - './script/s3_bootstrap.sh:/etc/localstack/init/ready.d/s3_bootstrap.sh'
+    networks:
+      - zalo_net
+
 
   app:
     image: fastapi-base:latest
     container_name: fastapi_app
     user: root  # Chạy với quyền root
     environment:
-      SQL_DATABASE_URL: "postgresql+psycopg2://postgres:postgres@db:5432/postgres"
+      - ENVIRONMENT=local
+      - SQL_DATABASE_URL=postgresql+psycopg2://postgres:postgres@db:5432/postgres
+      - AWS_S3_ENDPOINT=http://localhost.localstack.cloud:4566
+      - AWS_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=localstack_key
+      - AWS_SECRET_ACCESS_KEY=localstack_secret
     ports:
       - "8000:8000"
     restart: unless-stopped
@@ -48,21 +78,10 @@ services:
         condition: service_healthy
       alembic:
         condition: service_started
-
-  localstack:
-    container_name: zalo_localstack
-    image: localstack/localstack
-    ports:
-      - "127.0.0.1:4566:4566"            # LocalStack Gateway
-      - "127.0.0.1:4510-4559:4510-4559"  # External services port range
-    environment:
-      - DEBUG=${DEBUG:-0}
-      - SERVICES=s3
-    volumes:
-      - localstack_data:/var/lib/localstack
-      - "/var/run/docker.sock:/var/run/docker.sock"
+      localstack:
+        condition: service_started
     networks:
-      - zalo_net  # <-- Thêm dòng này nếu chưa có
+        - zalo_net
 
 volumes:
   localstack_data:  # <-- Định nghĩa volume
@@ -70,3 +89,4 @@ volumes:
 networks:
   zalo_net:  # <-- Định nghĩa network
     driver: bridge
+    name: zalo_net
