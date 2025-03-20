@@ -39,14 +39,11 @@ services:
     networks:
       - zalo_net
         
-
   localstack:
     container_name: zalo_localstack
     image: localstack/localstack
     ports:
-      - 4576:4576
-      - 4572:4572
-      - 4566:4566
+      - "4566:4566"  # Chỉ cần mở port 4566
     environment:
       - DEBUG=${DEBUG:-0}
       - SERVICES=s3
@@ -57,16 +54,20 @@ services:
       - './script/s3_bootstrap.sh:/etc/localstack/init/ready.d/s3_bootstrap.sh'
     networks:
       - zalo_net
-
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:4566/_localstack/health" ]
+      interval: 10s
+      retries: 5
+      timeout: 5s
 
   app:
     image: fastapi-base:latest
     container_name: fastapi_app
-    user: root  # Chạy với quyền root
+    user: root
     environment:
       - ENVIRONMENT=local
       - SQL_DATABASE_URL=postgresql+psycopg2://postgres:postgres@db:5432/postgres
-      - AWS_S3_ENDPOINT=http://localhost.localstack.cloud:4566
+      - AWS_S3_ENDPOINT=http://localhost:4566
       - AWS_REGION=us-east-1
       - AWS_ACCESS_KEY_ID=localstack_key
       - AWS_SECRET_ACCESS_KEY=localstack_secret
@@ -79,7 +80,7 @@ services:
       alembic:
         condition: service_started
       localstack:
-        condition: service_started
+        condition: service_healthy  # SỬA LẠI
     networks:
         - zalo_net
 

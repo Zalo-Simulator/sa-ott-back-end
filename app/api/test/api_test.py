@@ -30,7 +30,9 @@ def test_upload_file(
     try:
         s3_key = s3_service.upload(file=file, user_id=user_id, is_public=is_public)
         s3_object = S3DocumentSchema(s3_key=s3_key, document_id=uuid.uuid4())
-        return DataResponse().success_response(data=s3_object)
+        return DataResponse().success_response(
+            data=FileUploadResponse(key=s3_object.s3_key)
+        )
     except Exception:
         raise ZaloError.CANNOT_UPLOAD_FILE.as_http_exception()
 
@@ -39,27 +41,31 @@ def test_upload_file(
     "/download", response_model=DataResponse[FileDownloadResponse], deprecated=True
 )
 def test_download_file(
-    payload: FileDownloadRequest, s3_service: S3Service = Depends()
+    s3_key: str = Form(..., min_length=1, max_length=255),
+    user_id: str = Form(..., min_length=1, max_length=50),
+    s3_service: S3Service = Depends(),
 ) -> Any:
     try:
         local_file_path = s3_service.download(
-            key=payload.key, user_id=payload.user_id, folder=settings.saved_documents
+            key=s3_key, file_name=str(uuid.uuid4()), folder=settings.saved_documents
         )
-        return DataResponse().success_response(data=FileDownloadResponse())
-    except Exception:
-        raise ZaloError.CANNOT_DOWNLOAD_FILE.as_http_exception()
+        return DataResponse().success_response(
+            data=FileDownloadResponse(local_file_path=local_file_path)
+        )
+    except Exception as e:
+        raise ZaloError.CANNOT_DOWNLOAD_FILE.as_http_exception(str(e))
 
 
 @router.get(
     "/get-public-file-url", response_model=DataResponse[GetPublicFileUrlResponse]
 )
 def test_get_public_file_url(
-    payload: GetPublicFileUrlRequest, s3_service: S3Service = Depends()
+    s3_key: str, is_public: bool = False, s3_service: S3Service = Depends()
 ) -> Any:
     try:
-        public_url = s3_service.generate_s3_url(key=payload.key, is_public=True)
+        public_url = s3_service.generate_s3_url(key=s3_key, is_public=is_public)
         return DataResponse().success_response(
-            data=GetPublicFileUrlResponse(url=public_url)
+            data=GetPublicFileUrlResponse(url=str(public_url))
         )
-    except Exception:
-        raise ZaloError.CANNOT_DOWNLOAD_FILE.as_http_exception()
+    except Exception as e:
+        raise ZaloError.CANNOT_DOWNLOAD_FILE.as_http_exception(str(e))

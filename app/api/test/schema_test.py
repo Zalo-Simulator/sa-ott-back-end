@@ -1,4 +1,5 @@
 from pydantic import BaseModel, Field
+from typing import Union
 
 
 class FileDownloadRequest(BaseModel):
@@ -7,13 +8,11 @@ class FileDownloadRequest(BaseModel):
 
 
 class FileUploadResponse(BaseModel):
-    status: str
     key: str
 
 
 class FileDownloadResponse(BaseModel):
-    key: str
-    url: str = None
+    local_file_path: Union[str, None]
 
 
 class GetPublicFileUrlRequest(BaseModel):
