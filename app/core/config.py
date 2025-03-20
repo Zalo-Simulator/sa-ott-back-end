@@ -27,7 +27,8 @@ class AWSConfig(BaseModel):
     AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY", "")
     AWS_REGION = os.getenv("AWS_REGION", "")
     AWS_S3_BUCKET = os.getenv("AWS_S3_BUCKET", "")
-    AWS_S3_ENDPOINT = os.getenv("AWS_S3_ENDPOINT", "")
+    AWS_INTERNAL_ENDPOINT_URL = os.getenv("AWS_INTERNAL_ENDPOINT_URL", "")
+    AWS_EXTERNAL_ENDPOINT_URL = os.getenv("AWS_EXTERNAL_ENDPOINT_URL", "")
     s3: S3Settings = S3Settings()
 
 

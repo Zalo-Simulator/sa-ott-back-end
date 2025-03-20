@@ -20,7 +20,7 @@ class S3Service:
         self.s3 = boto3.client(
             "s3",
             region_name=self.region,
-            endpoint_url=settings.aws.AWS_S3_ENDPOINT,
+            endpoint_url=settings.aws.AWS_INTERNAL_ENDPOINT_URL,
             **aws_credentials_dummy,
         )
         if bucket is None:
@@ -194,7 +194,9 @@ class S3Service:
                 )
             else:
                 if settings.environment in ["local", "test"]:
-                    return f"{settings.aws.AWS_S3_ENDPOINT}/{self.bucket}/{key}"
+                    return (
+                        f"{settings.aws.AWS_EXTERNAL_ENDPOINT_URL}/{self.bucket}/{key}"
+                    )
                 return f"https://{self.bucket}.s3.{self.region}.amazonaws.com/{key}"
         except ClientError as e:
             logger.error(e)
