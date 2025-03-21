@@ -23,6 +23,7 @@ jobs:
         run: |
           echo "REPO_URL=${{ env.REPO_URL }}" > .env
           echo "PROJECT_DIR=${{ env.PROJECT_DIR }}" >> .env
+          echo "AWS_EXTERNAL_ENDPOINT_URL=http://${{ env.HOST }}:4566" >> .env
       
       - name: Upload environment file to EC2
         run: |
