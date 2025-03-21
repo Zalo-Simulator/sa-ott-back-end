@@ -51,7 +51,7 @@ services:
     volumes:
       - localstack_data:/var/lib/localstack
       - "/var/run/docker.sock:/var/run/docker.sock"
-      - './script/s3_bootstrap.sh:/etc/localstack/init/ready.d/s3_bootstrap.sh'
+      - "./scripts/s3_bootstrap.sh:/etc/localstack/init/ready.d/s3_bootstrap.sh"
     networks:
       - zalo_net
     healthcheck:
