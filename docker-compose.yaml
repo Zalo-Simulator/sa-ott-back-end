@@ -67,7 +67,7 @@ services:
     environment:
       - ENVIRONMENT=local
       - SQL_DATABASE_URL=postgresql+psycopg2://postgres:postgres@db:5432/postgres
-      - AWS_EXTERNAL_ENDPOINT_URL=http://localhost:4566
+      - AWS_EXTERNAL_ENDPOINT_URL=http://0.0.0.0:4566
       - AWS_INTERNAL_ENDPOINT_URL=http://localstack:4566
       - AWS_REGION=us-east-1
       - AWS_ACCESS_KEY_ID=localstack_key
