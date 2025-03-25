@@ -1,14 +1,14 @@
 from fastapi import HTTPException, Depends
-
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from app.models import User
-from app.services.srv_user import UserService
+from app.services.srv_user import UserService, reusable_oauth2 
 from app.exception.auth_error import AuthenticationError
 
 
 def login_required(
-    http_authorization_credentials=Depends(UserService().reusable_oauth2),
+    http_authorization_credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer()),
 ):
-    return UserService().get_current_user(http_authorization_credentials)
+    return UserService.get_current_user(http_authorization_credentials)
 
 
 class PermissionRequired:

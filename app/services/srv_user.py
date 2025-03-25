@@ -21,13 +21,15 @@ from app.schemas.sche_user import (
 )
 
 logger = logging.getLogger()
+
+reusable_oauth2 = HTTPBearer(scheme_name="Authorization")
+
 class UserService(object):
     __instance = None
 
     def __init__(self) -> None:
         pass
 
-    reusable_oauth2 = HTTPBearer(scheme_name="Authorization")
 
     @staticmethod
     def authenticate(*, phone: str, password: str) -> Optional[User]:
@@ -38,7 +40,7 @@ class UserService(object):
         user = db.session.query(User).filter(User.phone == phone).first()
         if not user:
             return "User not found"
-        if not verify_password(password, user.hashed_password):
+        if not verify_password(password, user.password_hash):
             return "Password is incorrect"
         return user
 
@@ -65,27 +67,26 @@ class UserService(object):
 
     @staticmethod
     def register_user(data: UserRegisterRequest):
-        exist_user_by_email = db.session.query(User).filter(User.email == data.email).first()
-        if exist_user_by_email:
-            logger.error(f"Email {data.email} already exists")
-            raise AuthenticationError.EMAIL_ALREADY_EXIST.as_http_exception()
-
         exist_user_by_phone = db.session.query(User).filter(User.phone == data.phone).first()
         if exist_user_by_phone:
-            logger.error(f"Phone {data.phone} already exists")  # ✅ Corrected log message
-            raise AuthenticationError.PHONE_ALREADY_EXIST.as_http_exception()  # ✅ Use correct error
+            raise AuthenticationError.PHONE_ALREADY_EXIST.as_http_exception()
 
         register_user = User(
             phone=data.phone,
             full_name=data.full_name,
-            email=data.email,
-            hashed_password=get_password_hash(data.password),
+            password_hash=get_password_hash(data.password),
             is_active=True,
-            role=data.role.value,
+            status="Available"
         )
         db.session.add(register_user)
         db.session.commit()
-        return register_user
+
+        return UserItemResponse(
+            id=register_user.id,
+            full_name=register_user.full_name,
+            is_active=register_user.is_active
+        )
+
 
     @staticmethod
     def create_user(data: UserCreateRequest):

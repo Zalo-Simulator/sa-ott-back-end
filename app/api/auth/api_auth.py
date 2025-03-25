@@ -15,6 +15,7 @@ from app.schemas.sche_user import UserItemResponse, UserRegisterRequest
 
 logger = logging.getLogger()
 router = APIRouter()
+auth_router = APIRouter()
 
 
 class LoginRequest(BaseModel):
@@ -42,17 +43,21 @@ def login_access_token(form_data: LoginRequest, user_service: UserService = Depe
     })
 
 
-@router.post("/register", response_model=DataResponse[UserItemResponse])
+
+@auth_router.post("/register", response_model=DataResponse[UserItemResponse])
 def auth_register(
-    register_data: UserRegisterRequest, user_service: UserService = Depends()
+    register_data: UserRegisterRequest,
+    user_service: UserService = Depends()
 ) -> Any:
     try:
         register_user = user_service.register_user(register_data)
         return DataResponse().success_response(data=register_user)
     except Exception as e:
+        logger.exception("REGISTER ERROR: %s", e)
         raise AuthenticationError.CANNOT_REGISTER_ACCOUNT.as_http_exception()
 
 
+    
 @router.post("/logout", response_model=DataResponse[Token])
 def auth_logout(form_data: LoginRequest, user_service: UserService = Depends()):
     """logout api"""

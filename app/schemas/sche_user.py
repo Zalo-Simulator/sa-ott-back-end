@@ -22,7 +22,7 @@ class UserItemResponse(BaseModel):
     id: int
     full_name: str
     is_active: bool
-    role: str
+    # role: str
 
 class UserDetailItemResponse(UserBase):
     id: int
@@ -45,10 +45,10 @@ class UserCreateRequest(UserBase):
 class UserRegisterRequest(BaseModel):
     phone: str
     full_name: str
-    email: EmailStr
+    # email: EmailStr
     password: str
-    avatar_url: Optional[str] = None
-    role: UserRole = UserRole.USER
+    # avatar_url: Optional[str] = None
+    # role: UserRole = UserRole.USER
 
 
 class UserUpdateMeRequest(BaseModel):
