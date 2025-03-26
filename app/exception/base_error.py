@@ -11,7 +11,7 @@ class ClientException(Exception):
         super().__init__(message)
 
 
-class BaseError(BaseException):
+class BaseError(Exception):
     def __init__(self, status: HTTPStatus, code: int, message: str):
         self.status = status
         self.code = code

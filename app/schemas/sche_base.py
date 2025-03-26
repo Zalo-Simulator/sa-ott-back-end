@@ -19,7 +19,7 @@ class ResponseSchemaBase(BaseModel):
 
     def success_response(self):
         self.code = '000'
-        self.message = 'Thành công'
+        self.message = 'successful'
         return self
 
 
@@ -37,7 +37,7 @@ class DataResponse(ResponseSchemaBase, GenericModel, Generic[T]):
 
     def success_response(self, data: T):
         self.code = '000'
-        self.message = 'Thành công'
+        self.message = 'successful'
         self.data = data
         return self
 

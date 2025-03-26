@@ -11,23 +11,22 @@ class UserBase(BaseModel):
     email: Optional[EmailStr] = None
     status: Optional[str] = 'Available'
     is_active: Optional[bool] = True
-    role: Optional[str] = UserRole.GUEST
-
-    class Config:
-        orm_mode = True
-
-class FriendBase(BaseModel):
-    user_id: Optional[str] = None
-    friend_id: Optional[EmailStr] = None
-    status: Optional[str] = 'Available'
-    friend_nick_name: Optional[bool] = True
+    role: Optional[str] = UserRole.USER
 
     class Config:
         orm_mode = True
 
 
-class UserItemResponse(UserBase):
+
+class UserItemResponse(BaseModel):
     id: int
+    full_name: str
+    is_active: bool
+    # role: str
+
+class UserDetailItemResponse(UserBase):
+    id: int
+    phone: str
     full_name: str
     email: EmailStr
     is_active: bool
@@ -40,15 +39,16 @@ class UserCreateRequest(UserBase):
     password: str
     email: EmailStr
     is_active: bool = True
-    role: UserRole = UserRole.GUEST
+    role: UserRole = UserRole.USER
 
 
 class UserRegisterRequest(BaseModel):
+    phone: str
     full_name: str
-    email: EmailStr
+    # email: EmailStr
     password: str
-    avatar_url: Optional[str] = None
-    role: UserRole = UserRole.GUEST
+    # avatar_url: Optional[str] = None
+    # role: UserRole = UserRole.USER
 
 
 class UserUpdateMeRequest(BaseModel):
@@ -65,17 +65,4 @@ class UserUpdateRequest(BaseModel):
     status: Optional[str]
     is_active: Optional[bool] = True
     role: Optional[UserRole]
-
-class FriendItemResponse(FriendBase):
-    id: int
-    user_id: str
-    friend_id: EmailStr
-    status: str
-
-class FriendCreateRequest(FriendBase):
-    user_id: str
-    friend_id: EmailStr
-    status: str
-    friend_nick_name: str
-
 

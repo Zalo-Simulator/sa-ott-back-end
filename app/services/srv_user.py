@@ -1,4 +1,5 @@
 import jwt
+import logging
 
 from typing import Optional
 from fastapi import Depends, HTTPException
@@ -12,12 +13,16 @@ from app.core.config import settings
 from app.core.security import verify_password, get_password_hash
 from app.schemas.sche_token import TokenPayload
 from app.schemas.sche_user import (
+    UserItemResponse,
     UserCreateRequest,
     UserUpdateMeRequest,
     UserUpdateRequest,
     UserRegisterRequest,
 )
 
+logger = logging.getLogger()
+
+reusable_oauth2 = HTTPBearer(scheme_name="Authorization")
 
 class UserService(object):
     __instance = None
@@ -25,19 +30,18 @@ class UserService(object):
     def __init__(self) -> None:
         pass
 
-    reusable_oauth2 = HTTPBearer(scheme_name="Authorization")
 
     @staticmethod
-    def authenticate(*, email: str, password: str) -> Optional[User]:
+    def authenticate(*, phone: str, password: str) -> Optional[User]:
         """
         Check username and password is correct.
         Return object User if correct, else return None
         """
-        user = db.session.query(User).filter_by(email=email).first()
+        user = db.session.query(User).filter(User.phone == phone).first()
         if not user:
-            return None
-        if not verify_password(password, user.hashed_password):
-            return None
+            return "User not found"
+        if not verify_password(password, user.password_hash):
+            return "Password is incorrect"
         return user
 
     @staticmethod
@@ -63,19 +67,26 @@ class UserService(object):
 
     @staticmethod
     def register_user(data: UserRegisterRequest):
-        exist_user = db.session.query(User).filter(User.email == data.email).first()
-        if exist_user:
-            raise AuthenticationError.EMAIL_ALREADY_EXIST.as_http_exception()
+        exist_user_by_phone = db.session.query(User).filter(User.phone == data.phone).first()
+        if exist_user_by_phone:
+            raise AuthenticationError.PHONE_ALREADY_EXIST.as_http_exception()
+
         register_user = User(
+            phone=data.phone,
             full_name=data.full_name,
-            email=data.email,
-            hashed_password=get_password_hash(data.password),
+            password_hash=get_password_hash(data.password),
             is_active=True,
-            role=data.role.value,
+            status="Available"
         )
         db.session.add(register_user)
         db.session.commit()
-        return register_user
+
+        return UserItemResponse(
+            id=register_user.id,
+            full_name=register_user.full_name,
+            is_active=register_user.is_active
+        )
+
 
     @staticmethod
     def create_user(data: UserCreateRequest):
@@ -83,6 +94,7 @@ class UserService(object):
         if exist_user:
             raise AuthenticationError.EMAIL_ALREADY_EXIST.as_http_exception()
         new_user = User(
+            phone=data.phone,
             full_name=data.full_name,
             email=data.email,
             hashed_password=get_password_hash(data.password),
@@ -133,8 +145,23 @@ class UserService(object):
         return user
 
     @staticmethod
-    def get(user_id):
+    def get_detail(user_id):
         exist_user = db.session.query(User).get(user_id)
         if exist_user is None:
             raise AuthenticationError.USER_NOT_FOUND.as_http_exception()
         return exist_user
+
+    @staticmethod
+    def get(user_id):
+        exist_user = db.session.query(User).get(user_id)
+        if exist_user is None:
+            raise AuthenticationError.USER_NOT_FOUND.as_http_exception()
+        return UserItemResponse(
+            id=exist_user.id,
+            full_name=exist_user.full_name,
+            is_active=exist_user.is_active,
+            role=exist_user.role,
+        )
+
+
+

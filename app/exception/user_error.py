@@ -19,3 +19,9 @@ class UserError(BaseError):
         code=1102,
         message="Cannot get user detail",
     )
+
+    CANNOT_GET_USER = BaseError(
+        status=HTTPStatus.BAD_REQUEST,
+        code=1102,
+        message="Cannot get user",
+    )

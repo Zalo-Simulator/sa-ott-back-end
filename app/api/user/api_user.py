@@ -10,6 +10,7 @@ from app.helpers.paging import Page, PaginationParams, paginate
 from app.schemas.sche_base import DataResponse
 from app.schemas.sche_user import (
     UserItemResponse,
+    UserDetailItemResponse,
     UserCreateRequest,
     UserUpdateMeRequest,
     UserUpdateRequest,
@@ -23,18 +24,31 @@ router = APIRouter()
 
 
 @router.get(
-    "/{id}",
+    "/detail/{id}",
     dependencies=[Depends(login_required)],
+    response_model=DataResponse[UserDetailItemResponse],
+)
+def get_user_detail(id: int, user_service: UserService = Depends()) -> Any:
+    """
+    API Get User information
+    """
+    try:
+        return DataResponse().success_response(data=user_service.get_detail(id))
+    except Exception:
+        raise UserError.CANNOT_GET_USER_DETAIL.as_http_exception()
+    
+@router.get(
+    "/{id}",
     response_model=DataResponse[UserItemResponse],
 )
-def get_user(id: int, user_service: UserService = Depends()) -> Any:
+def get_user_detail(id: int, user_service: UserService = Depends()) -> Any:
     """
     API Get User information
     """
     try:
         return DataResponse().success_response(data=user_service.get(id))
     except Exception:
-        raise UserError.CANNOT_GET_USER_DETAIL.as_http_exception()
+        raise UserError.CANNOT_GET_USER.as_http_exception()
 
 
 @router.put(

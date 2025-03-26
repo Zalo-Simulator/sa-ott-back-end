@@ -1,5 +1,6 @@
 from typing import Any
 from datetime import datetime
+import logging
 
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi_sqlalchemy import db
@@ -12,21 +13,24 @@ from app.services.srv_user import UserService
 from app.exception.auth_error import AuthenticationError
 from app.schemas.sche_user import UserItemResponse, UserRegisterRequest
 
-
+logger = logging.getLogger()
 router = APIRouter()
+auth_router = APIRouter()
 
 
 class LoginRequest(BaseModel):
-    username: EmailStr = "tintra17@gmail.com"
+    phone: str = "0975828593"
     password: str = "secret123"
 
 
 @router.post("/login", response_model=DataResponse[Token])
 def login_access_token(form_data: LoginRequest, user_service: UserService = Depends()):
     user = user_service.authenticate(
-        email=form_data.username, password=form_data.password
+        phone=form_data.phone, password=form_data.password
     )
-    if not user:
+    if isinstance(user, str):
+        if user == "User not found":
+            raise AuthenticationError.USER_NOT_FOUND.as_http_exception()
         raise AuthenticationError.INVALID_USER_LOGIN.as_http_exception()
     elif not user.is_active:
         raise AuthenticationError.INACTIVE_USER.as_http_exception()
@@ -39,17 +43,21 @@ def login_access_token(form_data: LoginRequest, user_service: UserService = Depe
     })
 
 
-@router.post("/register", response_model=DataResponse[UserItemResponse])
+
+@auth_router.post("/register", response_model=DataResponse[UserItemResponse])
 def auth_register(
-    register_data: UserRegisterRequest, user_service: UserService = Depends()
+    register_data: UserRegisterRequest,
+    user_service: UserService = Depends()
 ) -> Any:
     try:
         register_user = user_service.register_user(register_data)
         return DataResponse().success_response(data=register_user)
-    except Exception:
+    except Exception as e:
+        logger.exception("REGISTER ERROR: %s", e)
         raise AuthenticationError.CANNOT_REGISTER_ACCOUNT.as_http_exception()
 
 
+    
 @router.post("/logout", response_model=DataResponse[Token])
 def auth_logout(form_data: LoginRequest, user_service: UserService = Depends()):
     """logout api"""
