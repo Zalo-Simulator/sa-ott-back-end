@@ -1,27 +1,42 @@
+# Sử dụng Python 3.9 lightweight image
 FROM python:3.9-slim-bullseye
 
-# Set the working directory
+# Thiết lập biến môi trường
+ENV PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=off \
+    PIP_DISABLE_PIP_VERSION_CHECK=on \
+    PIP_DEFAULT_TIMEOUT=100 \
+    PATH="/venv/bin:$PATH"
+
+# Định nghĩa thư mục làm việc
 WORKDIR /app
 
-# Copy the requirements file and install dependencies
+# Copy requirements file
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the rest of the application code
+# Cài đặt dependencies, virtual environment, và AWS CLI
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends gcc python3-venv && \
+    python -m venv /venv && \
+    pip install --upgrade pip && \
+    pip install -r requirements.txt && \
+    pip install awscli && \
+    apt-get remove -y gcc && apt-get autoremove -y && \
+    rm -rf /var/lib/apt/lists/*
+
+# Copy source code
 COPY . .
 
-# Create a group and user to run the application
-RUN groupadd -g 1000 app_group && \
-    useradd -m -g app_group --uid 1000 app_user
+# Tạo user không có quyền root để tăng bảo mật
+RUN groupadd --gid 1000 app_group && \
+    useradd --system --uid 1000 --gid app_group app_user && \
+    chown -R app_user:app_group /app
 
-# Change ownership of the application files
-RUN chown -R app_user:app_group /app
-
-# Switch to the new user
+# Chạy dưới user không phải root
 USER app_user
 
-# Expose the port the app runs on
+# Mở port 8000
 EXPOSE 8000
 
-# Command to run the application
+# Chạy ứng dụng (sử dụng biến môi trường từ docker-compose)
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

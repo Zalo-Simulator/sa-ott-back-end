@@ -22,7 +22,7 @@ def get_application() -> FastAPI:
         redoc_url="/re-docs",
         openapi_url=f"{settings.API_PREFIX}/openapi.json",
         description="""
-        Base frame with FastAPI micro framework + Postgresql
+        Zalo Simulator Base frame with FastAPI micro framework + Postgresql
             - Login/Register with JWT
             - Permission
             - CRUD User

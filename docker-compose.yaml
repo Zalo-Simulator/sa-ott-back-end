@@ -1,48 +1,94 @@
-version: '3.7'
-
 services:
   db:
     image: postgres:13.2
+    container_name: postgres_db
     volumes:
       - ./docker/db:/var/lib/postgresql/data
       - ./postgresql.conf:/etc/postgresql/postgresql.conf
     expose:
-      - 5432
-    environment:
-      - POSTGRES_DB=postgres
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
+      - "5432"
     ports:
-      - "5433:5432"
+      - "5454:5432"
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
     healthcheck:
-      test: pg_isready -d postgres -U postgres
-      interval: 5s
-      timeout: 60s
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
       retries: 5
+      timeout: 5s
     restart: unless-stopped
+    networks:
+      - zalo_net
+
 
   alembic:
     image: fastapi-base:latest
+    user: root  # Chạy container với user root
     environment:
-      SQL_DATABASE_URL: 'postgresql+psycopg2://postgres:postgres@db:5432/postgres'
-      SECRET_KEY: ${SECRET_KEY}
-    command: [ "alembic", "upgrade", "head" ]
+      SQL_DATABASE_URL: "postgresql+psycopg2://postgres:postgres@db:5432/postgres"
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        pip install --no-cache-dir -r requirements.txt &&
+        alembic upgrade head
     depends_on:
-      db: 
+      db:
         condition: service_healthy
+    networks:
+      - zalo_net
+        
+  localstack:
+    container_name: zalo_localstack
+    image: localstack/localstack
+    ports:
+      - "4566:4566"  # Chỉ cần mở port 4566
+    environment:
+      - DEBUG=${DEBUG:-0}
+      - SERVICES=s3
+      - EDGE_PORT=4566
+    volumes:
+      - localstack_data:/var/lib/localstack
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "./scripts/s3_bootstrap.sh:/etc/localstack/init/ready.d/s3_bootstrap.sh"
+    networks:
+      - zalo_net
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:4566/_localstack/health" ]
+      interval: 10s
+      retries: 5
+      timeout: 5s
 
   app:
     image: fastapi-base:latest
-    volumes:
-      - .:/app
+    container_name: fastapi_app
+    user: root
     environment:
-      PROJECT_NAME: ${PROJECT_NAME}
-      SQL_DATABASE_URL: 'postgresql+psycopg2://postgres:postgres@db:5432/postgres'
-      SECRET_KEY: ${SECRET_KEY}
+      - ENVIRONMENT=local
+      - SQL_DATABASE_URL=postgresql+psycopg2://postgres:postgres@db:5432/postgres
+      - AWS_EXTERNAL_ENDPOINT_URL=${AWS_EXTERNAL_ENDPOINT_URL:-http://localhost:4566}
+      - AWS_INTERNAL_ENDPOINT_URL=http://localstack:4566
+      - AWS_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=localstack_key
+      - AWS_SECRET_ACCESS_KEY=localstack_secret
     ports:
       - "8000:8000"
     restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
-    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+      alembic:
+        condition: service_started
+      localstack:
+        condition: service_healthy  # SỬA LẠI
+    networks:
+        - zalo_net
+
+volumes:
+  localstack_data:  # <-- Định nghĩa volume
+
+networks:
+  zalo_net:  # <-- Định nghĩa network
+    driver: bridge
+    name: zalo_net
