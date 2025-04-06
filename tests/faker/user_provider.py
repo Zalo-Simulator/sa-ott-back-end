@@ -22,7 +22,6 @@ class UserProvider(faker.providers.BaseProvider):
             email=data.get('email') or fake.email(),
             hashed_password=get_password_hash(data.get('password')) or get_password_hash(fake.lexify(text='?????????')),
             is_active=data.get('is_active') if data.get('is_active') is not None else True,
-            role=data.get('role') if data.get('role') is not None else UserRole.GUEST.value
         )
         with db():
             db.session.add(user)
