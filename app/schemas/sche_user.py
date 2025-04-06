@@ -28,9 +28,7 @@ class UserDetailItemResponse(UserBase):
     id: int
     phone: str
     full_name: str
-    email: EmailStr
     is_active: bool
-    role: str
     last_login: Optional[datetime]
 
 

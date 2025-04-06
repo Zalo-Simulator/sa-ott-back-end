@@ -39,4 +39,4 @@ USER app_user
 EXPOSE 8000
 
 # Chạy ứng dụng (sử dụng biến môi trường từ docker-compose)
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]

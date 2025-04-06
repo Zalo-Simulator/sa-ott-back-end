@@ -1,5 +1,5 @@
 import logging
-from typing import Any
+from typing import Any, List
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi_sqlalchemy import db
@@ -24,7 +24,7 @@ router = APIRouter()
 
 
 @router.get(
-    "/detail/{id}",
+    "/{id}",
     dependencies=[Depends(login_required)],
     response_model=DataResponse[UserDetailItemResponse],
 )
@@ -36,20 +36,6 @@ def get_user_detail(id: int, user_service: UserService = Depends()) -> Any:
         return DataResponse().success_response(data=user_service.get_detail(id))
     except Exception:
         raise UserError.CANNOT_GET_USER_DETAIL.as_http_exception()
-    
-@router.get(
-    "/{id}",
-    response_model=DataResponse[UserItemResponse],
-)
-def get_user_detail(id: int, user_service: UserService = Depends()) -> Any:
-    """
-    API Get User information
-    """
-    try:
-        return DataResponse().success_response(data=user_service.get(id))
-    except Exception:
-        raise UserError.CANNOT_GET_USER.as_http_exception()
-
 
 @router.put(
     "/{id}",
@@ -72,7 +58,7 @@ def update_user(
 @router.get(
     "/{id}/contacts",
     dependencies=[Depends(login_required)],
-    response_model=DataResponse[list[UserItemResponse]],
+    response_model=DataResponse[List[UserItemResponse]],
 )
 def get_user_contacts(id: int, user_service: UserService = Depends()) -> Any:
     """
