@@ -1,10 +1,11 @@
-from sqlalchemy import Column, Integer, String, Text, ForeignKey, Boolean, TIMESTAMP, CheckConstraint, UniqueConstraint, func
+from sqlalchemy import Column, String, Text, Boolean
 from sqlalchemy.orm import relationship
 from app.models.model_base import BareBaseModel
 
+
 class User(BareBaseModel):
-    __tablename__ = 'users'
-    
+    __tablename__ = "users"
+
     phone = Column(String(20), unique=True, nullable=False)
     full_name = Column(String(100), nullable=False)
     password_hash  = Column(Text, nullable=False)
@@ -15,4 +16,11 @@ class User(BareBaseModel):
     friends = relationship("Friend", foreign_keys="[Friend.user_id]")
     groups = relationship("Group", back_populates="creator")
 
-
+    sent_messages = relationship(
+        "MessageModel", back_populates="sender", foreign_keys="[MessageModel.sender_id]"
+    )
+    sent_reactions = relationship(
+        "MessageReactionModel",
+        back_populates="sender",
+        foreign_keys="[MessageReactionModel.user_id]",
+    )
