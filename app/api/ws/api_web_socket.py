@@ -10,9 +10,10 @@ from fastapi import (
     WebSocketDisconnect,
 )
 from sqlalchemy.orm import Session
-from app.models.model_message import MessageModel
+from app.models.model_message import MessageModel, MessageReactionModel
 from app.db.base import get_db
 from app.models.model_group import GroupMember
+from typing import TypedDict
 
 # Store active WebSocket connections mapped by user ID
 clients: Dict[int, WebSocket] = {}
@@ -24,6 +25,14 @@ chat_messages: List[Dict] = []
 router = APIRouter()
 
 logger = logging.getLogger()
+
+
+class DataDict(TypedDict):
+    message_type: str  # text, image, video, file, sticker, reaction
+    group_id: int  # ID of the group to send message to
+    message: Optional[str]
+    message_id: Optional[int]  # ID of the message to react to
+    reaction: Optional[str]  # reaction type
 
 
 @router.websocket("/users/{user_id}")
@@ -52,11 +61,12 @@ async def websocket_endpoint(
                 await websocket.send_text("⚠️ Invalid JSON format.")
                 raise
 
-            if "message" not in json_data or "group_id" not in json_data:
+            if "message_type" not in json_data or "group_id" not in json_data:
                 await websocket.send_text(
-                    '⚠️ Invalid data. Use \'{{"group_id": <id:int>, "message": "<message>"}}\''
+                    '⚠️ Invalid data. Use \'{{"message_type": "<message_type>", "group_id": "<group_id:int>" }}\''
                 )
 
+            # Group validation: Is that group valid and user is a member of that group?
             group_id: int = json_data["group_id"]
             if isinstance(group_id, str):
                 try:
@@ -80,22 +90,73 @@ async def websocket_endpoint(
                 await websocket.send_text("⚠️ Group or user not found.")
                 raise
 
-            message: str = json_data["message"]
-            timestamp = datetime.now().isoformat()
+            # Reaction validation: Is that reaction valid?
+            if (
+                json_data["message_type"] == "reaction"
+                and "message_id" in json_data
+                and "reaction" in json_data
+            ):
+                message_id: int = json_data["message_id"]
+                if isinstance(message_id, str):
+                    try:
+                        message_id = int(message_id)
+                    except ValueError:
+                        logger.error(f"❌ Invalid message_id: {message_id}")
+                        await websocket.send_text("⚠️ Invalid message ID.")
+                        raise
+                reaction: str = json_data["reaction"]
+                db_message_reaction: MessageReactionModel = (
+                    db.query(MessageReactionModel)
+                    .filter(
+                        (MessageReactionModel.message_id == message_id)
+                        & (MessageReactionModel.user_id == user_id)
+                        & (MessageReactionModel.reaction == reaction)
+                    )
+                    .first()
+                )
+                if db_message_reaction is None:
+                    db_message_reaction = MessageReactionModel(
+                        message_id=message_id,
+                        user_id=user_id,
+                        reaction=reaction,
+                        count=1,
+                    )
+                    db.add(db_message_reaction)
+                else:
+                    db_message_reaction.count += 1
+                db.commit()
+                db.refresh(db_message_reaction)
+                logger.info(f"💾 Reaction saved: {user_id} ➜ {message_id}: {reaction}")
 
-            # Save message
-            db_message = MessageModel(
-                group_id=group_id,
-                sender_id=user_id,
-                content=message,
-                created_at=timestamp,
-                message_type="text",
-            )
-            db.add(db_message)
-            db.commit()
-            db.refresh(db_message)
+                response_data_string = json_dump_data
 
-            logger.info(f"💾 Message saved: {user_id} ➜ {group_id}: {message}")
+            # Message validation: Is that message valid?
+            elif json_data["message_type"] == "text" and "message" in json_data:
+                message: str = json_data["message"]
+                timestamp = datetime.now().isoformat()
+
+                # Save message
+                db_message = MessageModel(
+                    group_id=group_id,
+                    sender_id=user_id,
+                    content=message,
+                    created_at=timestamp,
+                    message_type="text",
+                )
+                db.add(db_message)
+                db.commit()
+                db.refresh(db_message)
+
+                logger.info(f"💾 Message saved: {user_id} ➜ {group_id}: {message}")
+
+                json_data["message_id"] = db_message.id
+                json_data["created_at"] = db_message.created_at.isoformat()
+                response_data_string = json.dumps(json_data)
+            else:
+                await websocket.send_text(
+                    '⚠️ We have not supported this message type yet. Please use "text"'
+                )
+                raise
 
             # Forward message if target is connected
             db_group_member_target = (
@@ -106,6 +167,7 @@ async def websocket_endpoint(
                 )
                 .all()
             )
+
             for member in db_group_member_target:
                 target_id = member.user_id
                 if target_id not in clients:
@@ -113,11 +175,12 @@ async def websocket_endpoint(
                         f"⚠️ User {target_id} is offline. Message not delivered."
                     )
                     continue
+
                 if target_id in clients:
-                    await clients[target_id].send_text(f"{user_id}: {message}")
-                    logger.info(f"📤 Sent to {group_id}: {message}")
-            else:
-                logger.warning(f"⚠️ User {group_id} is offline. Message not delivered.")
+                    await clients[target_id].send_text(response_data_string)
+                    logger.info(f"📤 Sent to {group_id}: {response_data_string}")
+                else:
+                    logger.info(f"⚠️ User {group_id} is offline. Message not delivered.")
 
     except WebSocketDisconnect:
         logger.error(f"❌ User {user_id} disconnected!")

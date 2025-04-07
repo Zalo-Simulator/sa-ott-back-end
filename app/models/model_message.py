@@ -26,7 +26,6 @@ class MessageModel(BareBaseModel):
         ),
     )
     attachment_id = Column(Integer)  # URL chứa file (ảnh, video, file, hoặc sticker)
-    created_at = Column(TIMESTAMP, default=func.now())
 
     sender = relationship("User", back_populates="sent_messages")
     reactions = relationship("MessageReactionModel", back_populates="message")
