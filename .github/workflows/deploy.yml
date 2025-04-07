@@ -1,0 +1,72 @@
+name: Deploy Backend to AWS EC2
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  PRIVATE_KEY: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+  HOST: ${{ secrets.EC2_PUBLIC_IP }}
+  USER: "ubuntu"
+  REPO_URL: "git@github.com:${{ github.repository }}.git"
+  PROJECT_DIR: "/home/ubuntu/app"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Create environment file
+        run: |
+          echo "REPO_URL=${{ env.REPO_URL }}" > .env
+          echo "PROJECT_DIR=${{ env.PROJECT_DIR }}" >> .env
+          echo "AWS_EXTERNAL_ENDPOINT_URL=http://${{ env.HOST }}:4566" >> .env
+      
+      - name: Upload environment file to EC2
+        run: |
+          echo "$PRIVATE_KEY" > private_key.pem
+          chmod 600 private_key.pem
+          scp -o StrictHostKeyChecking=no -i private_key.pem .env $USER@$HOST:/home/ubuntu/app/.env
+          rm -f private_key.pem .env
+      
+      - name: SSH into EC2 and deploy
+        run: |
+          echo "$PRIVATE_KEY" > private_key.pem
+          chmod 600 private_key.pem
+      
+          ssh -o StrictHostKeyChecking=no -i private_key.pem $USER@$HOST << EOF
+            export $(cat /home/ubuntu/app/.env | xargs)
+            cd /home/ubuntu/app
+            
+            echo "Updating system packages..."
+            sudo apt update -y
+
+            echo "Installing Docker..."
+            curl -fsSL https://get.docker.com -o get-docker.sh
+            sudo sh get-docker.sh
+            sudo usermod -aG docker $USER
+
+            echo "Installing Docker Compose..."
+            sudo apt install -y docker-compose
+
+            echo "Cloning or updating the repository..."
+            if [ ! -d "$PROJECT_DIR" ]; then
+              git clone $REPO_URL $PROJECT_DIR
+            else
+              echo "Cannot clone the repository because the directory already exists. Pulling instead..."
+              cd $PROJECT_DIR
+              git pull origin main
+            fi
+
+            echo "Starting Docker Compose..."
+            docker-compose down
+            docker build -t fastapi-base:latest .
+            docker-compose up -d
+      
+            echo "Deployment complete!"
+          EOF
+      
+          rm -f private_key.pem

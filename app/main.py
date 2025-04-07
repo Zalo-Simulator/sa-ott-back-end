@@ -6,10 +6,10 @@ from fastapi_sqlalchemy import DBSessionMiddleware
 from starlette.middleware.cors import CORSMiddleware
 
 from app.api.router.api_router import router
-from app.models import Base
-from app.db.base import engine
 from app.core.config import settings
+from app.db.base import engine
 from app.helpers.exception_handler import CustomException, http_exception_handler
+from app.models import Base
 
 logging.config.fileConfig(settings.LOGGING_CONFIG_FILE, disable_existing_loggers=False)
 Base.metadata.create_all(bind=engine)
@@ -22,7 +22,7 @@ def get_application() -> FastAPI:
         redoc_url="/re-docs",
         openapi_url=f"{settings.API_PREFIX}/openapi.json",
         description="""
-        Base frame with FastAPI micro framework + Postgresql
+        Zalo Simulator Base frame with FastAPI micro framework + Postgresql
             - Login/Register with JWT
             - Permission
             - CRUD User
@@ -32,7 +32,7 @@ def get_application() -> FastAPI:
     )
     application.add_middleware(
         CORSMiddleware,
-        allow_origins=[str(origin) for origin in settings.BACKEND_CORS_ORIGINS],
+        allow_origins=["*"],
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],

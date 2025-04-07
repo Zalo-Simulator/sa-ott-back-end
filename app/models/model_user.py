@@ -1,20 +1,26 @@
-from sqlalchemy import Column, Integer, String, Text, ForeignKey, Boolean, TIMESTAMP, CheckConstraint, UniqueConstraint, func
+from sqlalchemy import Column, String, Text, Boolean
 from sqlalchemy.orm import relationship
 from app.models.model_base import BareBaseModel
 
+
 class User(BareBaseModel):
-    __tablename__ = 'users'
-    
+    __tablename__ = "users"
+
     phone = Column(String(20), unique=True, nullable=False)
     full_name = Column(String(100), nullable=False)
-    # email = Column(String(100), unique=True, nullable=False)
     password_hash  = Column(Text, nullable=False)
-    # avatar_url = Column(Text)
+    avatar_url = Column(Text)
     status = Column(Text, default='Available')
-    # role = Column(String(20), CheckConstraint("role IN ('admin', 'guest')"))
     is_active = Column(Boolean, default=True)
 
     friends = relationship("Friend", foreign_keys="[Friend.user_id]")
     groups = relationship("Group", back_populates="creator")
 
-
+    sent_messages = relationship(
+        "MessageModel", back_populates="sender", foreign_keys="[MessageModel.sender_id]"
+    )
+    sent_reactions = relationship(
+        "MessageReactionModel",
+        back_populates="sender",
+        foreign_keys="[MessageReactionModel.user_id]",
+    )
