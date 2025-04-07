@@ -31,6 +31,8 @@ $ uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 - Build Dockerfile
 ```bash
 docker build -t fastapi-base:latest .
+# Or hard re-build
+docker build -t fastapi-base:latest . --no-cache
 ```
 
 - Run docker-compose
@@ -43,6 +45,28 @@ docker-compose up -d
 chmod +x ./scripts/s3_bootstrap.sh
 ./scripts/s3_bootstrap.sh
 ```
+
+## Migration
+Export everything from .env to terminal
+```bash
+export $(cat .env | envsubst | xargs)
+export $(cat env.example | envsubst | xargs)
+```
+```bash
+alembic init alembic
+```
+Modify DATABASE_URL inside alembic.ini. For example:
+```
+sqlalchemy.url = postgresql://localuser:localpassword@localhost:5432/postgres
+```
+Migrate
+```bash
+alembic revision --autogenerate -m "Initial migration"
+```
+```bash
+alembic upgrade head
+```
+
 
 
 ## Project's structure
