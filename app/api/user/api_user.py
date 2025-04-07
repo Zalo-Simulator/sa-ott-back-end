@@ -15,46 +15,62 @@ from app.schemas.sche_user import (
     UserUpdateMeRequest,
     UserUpdateRequest,
 )
-from app.schemas.sche_friend import (
-    FriendsListResponse,
-    FriendSchemaResponse
-)
+from app.schemas.sche_friend import FriendsListResponse, FriendSchemaResponse
 from app.services.srv_user import UserService
 from app.services.srv_friend import FriendService
 from app.models import User
+from app.services.srv_user import UserService
 from app.exception.user_error import UserError
 
 logger = logging.getLogger()
 router = APIRouter()
 
 
+# @router.get(
+#     "/detail/{id}",
+#     dependencies=[Depends(login_required)],
+#     response_model=DataResponse[UserDetailItemResponse],
+# )
+# def get_user_detail(id: int, user_service: UserService = Depends()) -> Any:
+#     """
+#     API Get User information
+#     """
+#     try:
+#         return DataResponse().success_response(data=user_service.get_detail(id))
+#     except Exception:
+#         raise UserError.CANNOT_GET_USER_DETAIL.as_http_exception()
+
+
 @router.get(
-    "/{id}",
-    dependencies=[Depends(login_required)],
-    response_model=DataResponse[UserDetailItemResponse],
+    "/me",
+    response_model=DataResponse[UserItemResponse],
 )
-def get_user_detail(id: int, user_service: UserService = Depends()) -> Any:
+def get_user_detail(
+    user: User = Depends(login_required), user_service: UserService = Depends()
+) -> Any:
     """
     API Get User information
     """
     try:
-        return DataResponse().success_response(data=user_service.get_detail(id))
+        return DataResponse().success_response(data=user_service.get(user.id))
     except Exception:
-        raise UserError.CANNOT_GET_USER_DETAIL.as_http_exception()
+        raise UserError.CANNOT_GET_USER.as_http_exception()
+
 
 @router.put(
     "/{id}",
-    dependencies=[Depends(login_required)],
     response_model=DataResponse[UserItemResponse],
 )
 def update_user(
-    id: int, user_data: UserUpdateRequest, user_service: UserService = Depends()
+    user_data: UserUpdateRequest,
+    user: User = Depends(login_required),
+    user_service: UserService = Depends(),
 ) -> Any:
     """
     API Update User information
     """
     try:
-        updated_user = user_service.update(user_id=id, data=user_data)
+        updated_user = user_service.update(user_id=user.id, data=user_data)
         return DataResponse().success_response(data=updated_user)
     except Exception:
         raise UserError.CANNOT_UPDATE_USER_ACCOUNT.as_http_exception()
@@ -75,6 +91,7 @@ def get_user_contacts(id: int, user_service: UserService = Depends()) -> Any:
     except Exception:
         raise UserError.CANNOT_GET_USER_CONTACTS.as_http_exception()
 
+
 @router.get(
     "/{id}/contacts/pending",
     dependencies=[Depends(login_required)],
@@ -90,12 +107,15 @@ def get_user_pending_contacts(id: int, user_service: UserService = Depends()) ->
     except Exception:
         raise UserError.CANNOT_GET_USER_PENDING_CONTACTS.as_http_exception()
 
+
 @router.post(
     "/{user_id}/contacts/{friend_id}",
     dependencies=[Depends(login_required)],
     response_model=DataResponse[FriendSchemaResponse],
 )
-def add_contact(user_id: int, friend_id: int, user_service: UserService = Depends()) -> Any:
+def add_contact(
+    user_id: int, friend_id: int, user_service: UserService = Depends()
+) -> Any:
     """
     API Add contact
     """

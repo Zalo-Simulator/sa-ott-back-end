@@ -8,6 +8,7 @@ from app.api.healthcheck import api_healthcheck
 from app.api.test import api_test
 from app.api.user import api_user
 from app.api.ws import api_web_socket
+from app.api.group import api_group
 
 router = APIRouter()
 
@@ -23,3 +24,4 @@ router.include_router(api_test.router, tags=["test"], prefix="/tests")
 router.include_router(api_friend.router, tags=["friend"], prefix="/friends")
 router.include_router(api_chat.router, tags=["chat"], prefix="/chats")
 router.include_router(api_web_socket.router, tags=["ws"], prefix="/ws")
+router.include_router(api_group.router, tags=["group"], prefix="/groups")

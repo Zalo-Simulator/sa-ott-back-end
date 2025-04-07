@@ -56,8 +56,15 @@ export $(cat env.example | envsubst | xargs)
 alembic init alembic
 ```
 Modify DATABASE_URL inside alembic.ini. For example:
-```
+```python
 sqlalchemy.url = postgresql://localuser:localpassword@localhost:5432/postgres
+```
+
+Modify `target_metadata` at `env.py` in `alembic` folder
+```python
+from app.models import Base
+
+target_metadata = Base.metadata
 ```
 Migrate
 ```bash
