@@ -143,6 +143,25 @@ class UserService(object):
         user.role = user.role if data.role is None else data.role.value
         db.session.commit()
         return user
+    
+    @staticmethod
+    def change_password(user_id: int, new_password: str):
+        user = db.session.query(User).get(user_id)
+        if not user:
+            raise AuthenticationError.USER_NOT_FOUND.as_http_exception()
+
+        user.password_hash = get_password_hash(new_password)
+        db.session.commit()
+
+    @staticmethod
+    def reset_password(phone: str, new_password: str):
+        user = db.session.query(User).filter(User.phone == phone).first()
+        if not user:
+            raise AuthenticationError.USER_NOT_FOUND.as_http_exception()
+
+        user.password_hash = get_password_hash(new_password)
+        db.session.commit()
+
 
     @staticmethod
     def get_detail(user_id):
