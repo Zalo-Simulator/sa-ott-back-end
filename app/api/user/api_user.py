@@ -26,33 +26,33 @@ logger = logging.getLogger()
 router = APIRouter()
 
 
-# @router.get(
-#     "/detail/{id}",
-#     dependencies=[Depends(login_required)],
-#     response_model=DataResponse[UserDetailItemResponse],
-# )
-# def get_user_detail(id: int, user_service: UserService = Depends()) -> Any:
-#     """
-#     API Get User information
-#     """
-#     try:
-#         return DataResponse().success_response(data=user_service.get_detail(id))
-#     except Exception:
-#         raise UserError.CANNOT_GET_USER_DETAIL.as_http_exception()
+@router.get(
+    "/{id}",
+    dependencies=[Depends(login_required)],
+    response_model=DataResponse[UserItemResponse],
+)
+def get(id: int, user_service: UserService = Depends()) -> Any:
+    """
+    API Get User information
+    """
+    try:
+        return DataResponse().success_response(data=user_service.get(id))
+    except Exception:
+        raise UserError.CANNOT_GET_USER_DETAIL.as_http_exception()
 
 
 @router.get(
     "/me",
     response_model=DataResponse[UserItemResponse],
 )
-def get_user_detail(
+def get_me(
     user: User = Depends(login_required), user_service: UserService = Depends()
 ) -> Any:
     """
     API Get User information
     """
     try:
-        return DataResponse().success_response(data=user_service.get(user.id))
+        return DataResponse().success_response(data=user_service.get_detail(user.id))
     except Exception:
         raise UserError.CANNOT_GET_USER.as_http_exception()
 

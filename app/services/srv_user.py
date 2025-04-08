@@ -120,15 +120,9 @@ class UserService(object):
         if user is None:
             raise AuthenticationError.USER_NOT_FOUND.as_http_exception()
         user.full_name = user.full_name if data.full_name is None else data.full_name
-        if data.password:
-            if not verify_password(data.password, user.password_hash):
-                return "Password is incorrect"
-            user.password_hash = get_password_hash(data.password)
-        user.phone = user.phone if data.phone is None else data.phone
-        user.avatar_url = (
-            user.avatar_url if data.avatar_url is None else data.avatar_url
-        )
         user.is_active = user.is_active if data.is_active is None else data.is_active
+        user.avatar_url = user.avatar_url if data.avatar_url is None else data.avatar_url
+
         db.session.commit()
         return user
     
@@ -165,6 +159,7 @@ class UserService(object):
             raise AuthenticationError.USER_NOT_FOUND.as_http_exception()
         return UserItemResponse(
             id=exist_user.id,
+            avatar_url=exist_user.avatar_url,
             full_name=exist_user.full_name,
             is_active=exist_user.is_active,
         )
@@ -192,10 +187,9 @@ class UserService(object):
 
         return FriendsListResponse(
             friends=[
-                UserDetailItemResponse(
+                UserItemResponse(
                     id=contact.id,
                     full_name=contact.full_name,
-                    phone=contact.phone,
                     avatar_url=contact.avatar_url,
                     is_active=contact.is_active,
                 )
@@ -249,10 +243,9 @@ class UserService(object):
             raise AuthenticationError.USER_NOT_FOUND.as_http_exception()
         return FriendsListResponse(
             friends=[
-                UserDetailItemResponse(
+                UserItemResponse(
                     id=contact.id,
                     full_name=contact.full_name,
-                    phone=contact.phone,
                     avatar_url=contact.avatar_url,
                     is_active=contact.is_active,
                 )
