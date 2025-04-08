@@ -21,6 +21,7 @@ class UserBase(BaseModel):
 class UserItemResponse(BaseModel):
     id: int
     full_name: str
+    avatar_url: Optional[str] = None
     is_active: bool
 
 class UserDetailItemResponse(UserBase):

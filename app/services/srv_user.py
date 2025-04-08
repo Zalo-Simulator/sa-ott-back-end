@@ -159,6 +159,7 @@ class UserService(object):
             raise AuthenticationError.USER_NOT_FOUND.as_http_exception()
         return UserItemResponse(
             id=exist_user.id,
+            avatar_url=exist_user.avatar_url,
             full_name=exist_user.full_name,
             is_active=exist_user.is_active,
         )
@@ -189,7 +190,6 @@ class UserService(object):
                 UserDetailItemResponse(
                     id=contact.id,
                     full_name=contact.full_name,
-                    phone=contact.phone,
                     avatar_url=contact.avatar_url,
                     is_active=contact.is_active,
                 )
@@ -246,7 +246,6 @@ class UserService(object):
                 UserDetailItemResponse(
                     id=contact.id,
                     full_name=contact.full_name,
-                    phone=contact.phone,
                     avatar_url=contact.avatar_url,
                     is_active=contact.is_active,
                 )

@@ -21,7 +21,7 @@ router.include_router(
 # router.include_router(api_auth.router, tags=["login"], prefix="/auth")
 router.include_router(api_user.router, tags=["user"], prefix="/users")
 router.include_router(api_test.router, tags=["test"], prefix="/tests")
-router.include_router(api_friend.router, tags=["friend"], prefix="/friends")
+# router.include_router(api_friend.router, tags=["friend"], prefix="/friends")
 router.include_router(api_chat.router, tags=["chat"], prefix="/chats")
 router.include_router(api_web_socket.router, tags=["ws"], prefix="/ws")
 router.include_router(api_group.router, tags=["group"], prefix="/groups")

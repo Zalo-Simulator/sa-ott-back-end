@@ -1,7 +1,8 @@
 from typing import Optional
 from pydantic import BaseModel
 from typing import List
-from app.schemas.sche_user import UserDetailItemResponse
+from app.schemas.sche_user import UserDetailItemResponse, UserItemResponse
+
 
 class FriendBase(BaseModel):
     user_id: Optional[int] = None
@@ -11,6 +12,8 @@ class FriendBase(BaseModel):
 
     class Config:
         orm_mode = True
+
+
 class FriendSchemaResponse(FriendBase):
     id: int
     user_id: int
@@ -18,14 +21,17 @@ class FriendSchemaResponse(FriendBase):
     status: str
     friend_nick_name: Optional[str]  # Optional field
 
+
 class FriendsListResponse(BaseModel):
-    friends: List[UserDetailItemResponse]
+    friends: List[UserItemResponse]
+
 
 class CreateFriendRequest(BaseModel):
     user_id: int
     friend_id: int
     status: str = "pending"
     friend_nick_name: Optional[str]
+
 
 class UpdateFriendRequest(BaseModel):
     user_id: Optional[int]
