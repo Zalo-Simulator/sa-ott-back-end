@@ -84,3 +84,5 @@ docker/
 
 app/config/*.json
 # app/config/zalo-simulator-firebase-adminsdk.json
+
+poc/*

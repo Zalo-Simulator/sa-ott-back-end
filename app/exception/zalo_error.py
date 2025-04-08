@@ -26,3 +26,8 @@ class ZaloError(BaseError):
         code=2502,
         message="Cannot download file",
     )
+    GROUP_NOT_FOUND = BaseError(
+        status=HTTPStatus.NOT_FOUND,
+        code=2503,
+        message="Group not found",
+    )
