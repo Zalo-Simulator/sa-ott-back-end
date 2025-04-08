@@ -133,14 +133,9 @@ class UserService(object):
         if user is None:
             raise AuthenticationError.USER_NOT_FOUND.as_http_exception()
         user.full_name = user.full_name if data.full_name is None else data.full_name
-        user.email = user.email if data.email is None else data.email
-        user.hashed_password = (
-            user.hashed_password
-            if data.password is None
-            else get_password_hash(data.password)
-        )
         user.is_active = user.is_active if data.is_active is None else data.is_active
-        user.role = user.role if data.role is None else data.role.value
+        user.avatar_url = user.avatar_url if data.avatar_url is None else data.avatar_url
+
         db.session.commit()
         return user
 

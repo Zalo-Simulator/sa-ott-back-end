@@ -57,10 +57,6 @@ class UserUpdateMeRequest(BaseModel):
 
 class UserUpdateRequest(BaseModel):
     full_name: Optional[str]
-    email: Optional[EmailStr]
-    password: Optional[str]
     avatar_url: Optional[str]
-    status: Optional[str]
     is_active: Optional[bool] = True
-    role: Optional[UserRole]
 
