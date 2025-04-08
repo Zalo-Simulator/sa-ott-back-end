@@ -9,7 +9,6 @@ class AuthenticationError(BaseError):
         code=1000,
         message="Incorrect password",
     )
-    
     INACTIVE_USER = BaseError(
         status=HTTPStatus.UNAUTHORIZED,
         code=1001,
@@ -44,4 +43,9 @@ class AuthenticationError(BaseError):
         status=HTTPStatus.NOT_FOUND,
         code=1006,
         message="User not found",
+    )
+    INCORRECT_PASSWORD = BaseError(
+        status=HTTPStatus.BAD_REQUEST,
+        code=1007,
+        message="Incorrect password",
     )
