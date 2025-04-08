@@ -1,34 +1,30 @@
-import jwt
 import logging
 
-from typing import Optional
+import jwt
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPBearer
 from fastapi_sqlalchemy import db
 from pydantic import ValidationError
-from starlette import status
-from app.exception.auth_error import AuthenticationError
-from app.models import User
+
 from app.core.config import settings
-from app.core.security import verify_password, get_password_hash
-from app.schemas.sche_token import TokenPayload
-from app.schemas.sche_user import (
-    UserItemResponse,
-    UserCreateRequest,
-    UserUpdateMeRequest,
-    UserUpdateRequest,
-    UserRegisterRequest,
-    UserDetailItemResponse,
-)
+from app.core.security import get_password_hash, verify_password
+from app.exception.auth_error import AuthenticationError
+from app.exception.friend_error import FriendError
+from app.models import User
 from app.models.model_friend import Friend
-from app.api.constants import USER_API_URL
 from app.schemas.sche_friend import (
     FriendSchemaResponse,
     FriendsListResponse,
-    CreateFriendRequest,
     UpdateFriendRequest,
 )
-from app.exception.friend_error import FriendError
+from app.schemas.sche_token import TokenPayload
+from app.schemas.sche_user import (
+    UserCreateRequest,
+    UserDetailItemResponse,
+    UserItemResponse,
+    UserRegisterRequest,
+    UserUpdateRequest,
+)
 
 logger = logging.getLogger()
 
@@ -42,16 +38,16 @@ class UserService(object):
         pass
 
     @staticmethod
-    def authenticate(*, phone: str, password: str) -> Optional[User]:
+    def authenticate(*, phone: str, password: str) -> User:
         """
         Check username and password is correct.
         Return object User if correct, else return None
         """
         user = db.session.query(User).filter(User.phone == phone).first()
         if not user:
-            return "User not found"
+            raise AuthenticationError.USER_NOT_FOUND.as_http_exception()
         if not verify_password(password, user.password_hash):
-            return "Password is incorrect"
+            raise AuthenticationError.INCORRECT_PASSWORD.as_http_exception()
         return user
 
     @staticmethod
@@ -125,7 +121,7 @@ class UserService(object):
 
         db.session.commit()
         return user
-    
+
     @staticmethod
     def change_password(user_id: int, new_password: str):
         user = db.session.query(User).get(user_id)
@@ -143,7 +139,6 @@ class UserService(object):
 
         user.password_hash = get_password_hash(new_password)
         db.session.commit()
-
 
     @staticmethod
     def get_detail(user_id):

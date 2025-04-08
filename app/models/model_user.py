@@ -1,5 +1,6 @@
-from sqlalchemy import Column, String, Text, Boolean
+from sqlalchemy import Boolean, Column, String, Text
 from sqlalchemy.orm import relationship
+
 from app.models.model_base import BareBaseModel
 
 
@@ -8,9 +9,9 @@ class User(BareBaseModel):
 
     phone = Column(String(20), unique=True, nullable=False)
     full_name = Column(String(100), nullable=False)
-    password_hash  = Column(Text, nullable=False)
+    password_hash = Column(Text, nullable=False)
     avatar_url = Column(Text)
-    status = Column(Text, default='Available')
+    status = Column(Text, default="Available")
     is_active = Column(Boolean, default=True)
 
     friends = relationship("Friend", foreign_keys="[Friend.user_id]")
