@@ -187,7 +187,7 @@ class UserService(object):
 
         return FriendsListResponse(
             friends=[
-                UserDetailItemResponse(
+                UserItemResponse(
                     id=contact.id,
                     full_name=contact.full_name,
                     avatar_url=contact.avatar_url,
@@ -243,7 +243,7 @@ class UserService(object):
             raise AuthenticationError.USER_NOT_FOUND.as_http_exception()
         return FriendsListResponse(
             friends=[
-                UserDetailItemResponse(
+                UserItemResponse(
                     id=contact.id,
                     full_name=contact.full_name,
                     avatar_url=contact.avatar_url,
