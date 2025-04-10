@@ -55,6 +55,7 @@ def get_chat_group(
                     full_name=message.sender.full_name,
                     avatar_url=message.sender.avatar_url,
                 ),
+                message_id=message.id,
                 message=message.content,
                 message_type=message.message_type,
                 attachment_id=[],  # TODO future

@@ -31,6 +31,7 @@ class MessageDetailAttachmentModel(BaseModel):
 
 class MessageDetailSchema(BaseModel):
     person: MessageDetailPersonSchema
+    message_id: int
     message: str = Field(..., min_length=1, max_length=250)
     message_type: str
     attachment_id: List[MessageDetailAttachmentModel] = []  # gọi API khác để lấy kaka
