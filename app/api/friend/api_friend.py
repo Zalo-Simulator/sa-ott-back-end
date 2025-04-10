@@ -11,100 +11,107 @@ from app.schemas.sche_base import DataResponse
 from app.schemas.sche_friend import (
     FriendSchemaResponse,
     CreateFriendRequest,
-    UpdateFriendRequest
+    UpdateFriendRequest,
+    FriendsListResponse
     
 )
 from app.services.srv_friend import FriendService
-from app.models import Friend
+from app.models import Friend, User
+from app.services.srv_user import UserService
+from app.exception.user_error import UserError
+
 
 logger = logging.getLogger()
 router = APIRouter()
 
 @router.get(
-    "/{id}",
-    dependencies=[Depends(login_required)],
-    response_model=DataResponse[FriendSchemaResponse],
-)
-def get(
-    user_id: int,
-    friend_service: FriendService = Depends()
-) -> List[FriendSchemaResponse]:
-    """
-    API Get Friend information
-    """
-    try:
-        return DataResponse().success_response(data=friend_service.get_friends(user_id))
-    except Exception:
-        raise FriendError.CANNOT_GET_FRIEND_DETAIL.as_http_exception()
-
-@router.get(
-    "/{user_id}/pending",
-    dependencies=[Depends(login_required)],
-    response_model=DataResponse[List[FriendSchemaResponse]],
-)
-def get_pending(
-    user_id: int,
-    friend_service: FriendService = Depends()
-):
-    """
-    API Get Pending Friend information
-    """
-    try:
-        return DataResponse().success_response(data=friend_service.get_pending_friends(user_id))
-    except Exception:
-        raise FriendError.CANNOT_GET_FRIEND_DETAIL.as_http_exception()
-    
-@router.post(
     "/",
     dependencies=[Depends(login_required)],
-    response_model=DataResponse[Any],
+    response_model=DataResponse[FriendsListResponse],
 )
-def create(
-    params: CreateFriendRequest,
-    friend_service: FriendService = Depends()
+def get_user_contacts(
+    user: User = Depends(login_required),
+    user_service: UserService = Depends()
 ) -> Any:
     """
-    API Create Friend information
+    API Get User's contacts
     """
     try:
-        return DataResponse().success_response(data=friend_service.create_friend_request(params))
-    except FriendError as e: 
-        if e == FriendError.FRIEND_REQUEST_EXISTED:
-            logger.error("Friend request existed")
-            raise e.as_http_exception()  
-        raise e.as_http_exception()
-    
-@router.put(
+        contacts = user_service.get_contacts(user.id)
+        return DataResponse().success_response(data=contacts)
+    except Exception:
+        raise UserError.CANNOT_GET_USER_CONTACTS.as_http_exception()
+
+
+@router.get(
+    "/pending",
+    dependencies=[Depends(login_required)],
+    response_model=DataResponse[FriendsListResponse],
+)
+def get_user_pending_contacts(
+    user: User = Depends(login_required),
+    user_service: UserService = Depends()
+) -> Any:
+    """
+    API Get User's pending contacts
+    """
+    try:
+        pending_contacts = user_service.get_pending_contacts(user.id)
+        return DataResponse().success_response(data=pending_contacts)
+    except Exception:
+        raise UserError.CANNOT_GET_USER_PENDING_CONTACTS.as_http_exception()
+
+
+@router.post(
     "/{friend_id}",
     dependencies=[Depends(login_required)],
     response_model=DataResponse[FriendSchemaResponse],
 )
-def update(
+def add_contact(
     friend_id: int,
-    params: UpdateFriendRequest,
-    friend_service: FriendService = Depends()
+    user: User = Depends(login_required),
+    user_service: UserService = Depends()
 ) -> Any:
     """
-    API Update Friend information
+    API Add contact
     """
     try:
-        return DataResponse().success_response(data=friend_service.update_friend_request(friend_id, params))
+        contact = user_service.create_friend_request(user.id, friend_id)
+        return DataResponse().success_response(data=contact)
     except Exception:
-        raise FriendError.CANNOT_UPDATE_FRIEND_REQUEST.as_http_exception()
+        raise UserError.CANNOT_ADD_CONTACT.as_http_exception()
+    
+
+@router.put(
+    "/{friend_id}",
+    dependencies=[Depends(login_required)],
+)
+def update_friend(
+    friend_id: int,
+    user: User = Depends(login_required),
+    user_service: UserService = Depends()
+) -> Any:
+    try:
+        contact = user_service.update_friend_request(int(user.id), friend_id)
+        return DataResponse().success_response(data=contact)
+    except Exception:
+        raise UserError.CANNOT_ADD_CONTACT.as_http_exception()
+
 
 @router.delete(
-    "/{id}",
+    "/{friend_id}",
     dependencies=[Depends(login_required)],
-    response_model=DataResponse[FriendSchemaResponse],
 )
-def delete(
+def delete_friend(
     friend_id: int,
-    friend_service: FriendService = Depends()
+    user: User = Depends(login_required),
+    user_service: UserService = Depends()
 ) -> Any:
     """
-    API Delete Friend information
+    API Add contact
     """
     try:
-        return DataResponse().success_response(data=friend_service.delete_friend_request(friend_id))
+        contact = user_service.delete_friend(user.id, friend_id)
+        return DataResponse().success_response(data=contact)
     except Exception:
-        raise FriendError.CANNOT_DELETE_FRIEND_REQUEST.as_http_exception()
+        raise UserError.CANNOT_ADD_CONTACT.as_http_exception()
