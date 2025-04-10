@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import List
+from typing import List, Optional
 
 
 class CreateNewGroupRequest(BaseModel):
@@ -12,3 +12,17 @@ class CreateNewGroupRequest(BaseModel):
 
 class CreateNewGroupResponse(BaseModel):
     pass
+
+
+class GroupsResponse(BaseModel):
+    id: int
+    name: str
+    type: str
+    created_by: int
+    visible: bool
+    member_count: int = 2
+    avatar_url: Optional[str] = None
+
+
+class GetGroupsByUserIdResponse(BaseModel):
+    groups: List[GroupsResponse]
