@@ -25,7 +25,7 @@ class MessageModel(BareBaseModel):
             "message_type IN ('text', 'image', 'video', 'file', 'sticker')"
         ),
     )
-    attachment_id = Column(Integer)  # URL chứa file (ảnh, video, file, hoặc sticker)
+    attachment_url = Column(Text)  # URL chứa file (ảnh, video, file, hoặc sticker)
 
     sender = relationship("User", back_populates="sent_messages")
     reactions = relationship("MessageReactionModel", back_populates="message")

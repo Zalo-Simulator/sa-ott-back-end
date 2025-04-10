@@ -34,7 +34,7 @@ class MessageDetailSchema(BaseModel):
     message_id: int
     message: str = Field(..., min_length=1, max_length=250)
     message_type: str
-    attachment_id: List[MessageDetailAttachmentModel] = []  # gọi API khác để lấy kaka
+    attachment_url: Optional[str] = None
     time: datetime
     reactions: List[MessageDetailReactionModel] = []
 
