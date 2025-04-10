@@ -29,7 +29,7 @@ class UserDetailItemResponse(UserBase):
     phone: str
     full_name: str
     is_active: bool
-    last_login: Optional[datetime]
+    avatar_url: Optional[str] = None
 
 
 class UserCreateRequest(UserBase):
