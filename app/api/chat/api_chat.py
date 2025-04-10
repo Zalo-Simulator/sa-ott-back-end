@@ -58,7 +58,7 @@ def get_chat_group(
                 message_id=message.id,
                 message=message.content,
                 message_type=message.message_type,
-                attachment_url=message.attachment_url,  # TODO future
+                attachment_id=[],  # TODO future
                 time=message.created_at,
                 reactions=[
                     MessageDetailReactionModel(
