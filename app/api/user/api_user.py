@@ -37,7 +37,9 @@ def get_me(
     API Get User information
     """
     try:
-        return DataResponse().success_response(data=user_service.get_detail(int(user.id)))
+        return DataResponse().success_response(
+            data=user_service.get_detail(int(user.id))
+        )
     except Exception:
         raise UserError.CANNOT_GET_USER.as_http_exception()
 
@@ -79,7 +81,8 @@ def update_user(
 @router.get(
     "/",
     dependencies=[Depends(login_required)],
-    response_model=DataResponse[List[UserItemResponse]])
+    response_model=DataResponse[List[UserItemResponse]],
+)
 def search_users(
     text: str = Query(..., description="Search by full name or phone number"),
     user_service: UserService = Depends(),
@@ -92,102 +95,34 @@ def search_users(
 
 
 @router.get(
-    "/{id}/groups",
+    "/{id}/contacts/pending",
     dependencies=[Depends(login_required)],
-    response_model=DataResponse[list[Any]],
+    response_model=DataResponse[FriendsListResponse],
 )
-def get_user_groups(id: int, user_service: UserService = Depends()) -> Any:
+def get_user_pending_contacts(id: int, user_service: UserService = Depends()) -> Any:
     """
-    API Get User's groups
+    API Get User's pending contacts
     """
     try:
-        groups = user_service.get_groups(id)
-        return DataResponse().success_response(data=groups)
+        pending_contacts = user_service.get_pending_contacts(id)
+        return DataResponse().success_response(data=pending_contacts)
     except Exception:
-        raise UserError.CANNOT_GET_USER_GROUPS.as_http_exception()
+        raise UserError.CANNOT_GET_USER_PENDING_CONTACTS.as_http_exception()
 
 
 @router.post(
-    "/groups",
-    dependencies=[Depends(PermissionRequired("admin"))],
-    response_model=DataResponse[Any],
-)
-def create_group(group_data: Any, user_service: UserService = Depends()) -> Any:
-    """
-    API Create new group
-    """
-    try:
-        new_group = user_service.create_group(group_data)
-        return DataResponse().success_response(data=new_group)
-    except Exception:
-        raise UserError.CANNOT_CREATE_GROUP.as_http_exception()
-
-
-@router.get(
-    "/groups/{id}",
+    "/{user_id}/contacts/{friend_id}",
     dependencies=[Depends(login_required)],
-    response_model=DataResponse[Any],
+    response_model=DataResponse[FriendSchemaResponse],
 )
-def get_group(id: int, user_service: UserService = Depends()) -> Any:
-    """
-    API Get group information
-    """
-    try:
-        group = user_service.get_group(id)
-        return DataResponse().success_response(data=group)
-    except Exception:
-        raise UserError.CANNOT_GET_GROUP_DETAIL.as_http_exception()
-
-
-@router.put(
-    "/groups/{id}",
-    dependencies=[Depends(PermissionRequired("admin"))],
-    response_model=DataResponse[Any],
-)
-def update_group(
-    id: int, group_data: Any, user_service: UserService = Depends()
+def add_contact(
+    user_id: int, friend_id: int, user_service: UserService = Depends()
 ) -> Any:
     """
-    API Update group information
+    API Add contact
     """
     try:
-        updated_group = user_service.update_group(id, group_data)
-        return DataResponse().success_response(data=updated_group)
+        contact = user_service.create_friend_request(user_id, friend_id)
+        return DataResponse().success_response(data=contact)
     except Exception:
-        raise UserError.CANNOT_UPDATE_GROUP.as_http_exception()
-
-
-@router.post(
-    "/groups/{id}/members",
-    dependencies=[Depends(PermissionRequired("admin"))],
-    response_model=DataResponse[Any],
-)
-def add_group_member(
-    id: int, user_id: int, user_service: UserService = Depends()
-) -> Any:
-    """
-    API Add member to group
-    """
-    try:
-        member = user_service.add_group_member(id, user_id)
-        return DataResponse().success_response(data=member)
-    except Exception:
-        raise UserError.CANNOT_ADD_GROUP_MEMBER.as_http_exception()
-
-
-@router.delete(
-    "/groups/{id}/members/{user_id}",
-    dependencies=[Depends(PermissionRequired("admin"))],
-    response_model=DataResponse[Any],
-)
-def remove_group_member(
-    id: int, user_id: int, user_service: UserService = Depends()
-) -> Any:
-    """
-    API Remove member from group
-    """
-    try:
-        user_service.remove_group_member(id, user_id)
-        return DataResponse().success_response(data=None)
-    except Exception:
-        raise UserError.CANNOT_REMOVE_GROUP_MEMBER.as_http_exception()
+        raise UserError.CANNOT_ADD_CONTACT.as_http_exception()

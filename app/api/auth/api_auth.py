@@ -35,6 +35,7 @@ def login_access_token(form_data: LoginRequest, user_service: UserService = Depe
         raise AuthenticationError.INACTIVE_USER.as_http_exception()
 
     setattr(user, "last_login", datetime.now())
+    user.is_online = True
     db.session.commit()
 
     return DataResponse().success_response({
@@ -63,6 +64,7 @@ def auth_register(
 @router.post("/logout", response_model=DataResponse[None])
 def auth_logout(current_user=Depends(UserService.get_current_user)):
     """logout api"""
+    current_user.is_online = False
     return DataResponse().success_response(data=None)
 
 

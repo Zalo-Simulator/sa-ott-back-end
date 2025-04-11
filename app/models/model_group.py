@@ -36,3 +36,4 @@ class GroupMember(CompositeKeyBase):
     role = Column(String(20), CheckConstraint("role IN ('admin', 'member')"))
 
     group = relationship("Group", back_populates="members")
+    user = relationship("User", back_populates="group_members")

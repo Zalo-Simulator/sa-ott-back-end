@@ -13,9 +13,11 @@ class User(BareBaseModel):
     avatar_url = Column(Text)
     status = Column(Text, default="Available")
     is_active = Column(Boolean, default=True)
+    is_online = Column(Boolean, default=False)
 
     friends = relationship("Friend", foreign_keys="[Friend.user_id]")
     groups = relationship("Group", back_populates="creator")
+    group_members = relationship("GroupMember", back_populates="user")
 
     sent_messages = relationship(
         "MessageModel", back_populates="sender", foreign_keys="[MessageModel.sender_id]"
