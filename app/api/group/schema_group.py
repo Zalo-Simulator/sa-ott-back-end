@@ -14,6 +14,10 @@ class CreateNewGroupResponse(BaseModel):
     pass
 
 
+class GroupID(BaseModel):
+    id: int
+
+
 class GroupMembersResponse(BaseModel):
     id: int
     name: str
