@@ -131,7 +131,11 @@ async def websocket_endpoint(
                 response_data_string = json_dump_data
 
             # Message validation: Is that message valid?
-            elif json_data["message_type"] == "text" and "message" in json_data:
+            elif (
+                json_data["message_type"]
+                in ["image", "video", "file", "sticker", "text"]
+                and "message" in json_data
+            ):
                 message: str = json_data["message"]
                 timestamp = datetime.now().isoformat()
 
@@ -152,6 +156,14 @@ async def websocket_endpoint(
                 json_data["message_id"] = db_message.id
                 json_data["created_at"] = db_message.created_at.isoformat()
                 response_data_string = json.dumps(json_data)
+
+            # Media validation: Is that media valid?
+            # if (
+            #     json_data["message_type"] in ["image", "video", "file", "sticker"]
+            #     and "message" in json_data
+            # ):
+            #     pass
+
             else:
                 await websocket.send_text(
                     '⚠️ We have not supported this message type yet. Please use "text"'
