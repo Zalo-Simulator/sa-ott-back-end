@@ -120,9 +120,7 @@ def get_private(
     )
     try:
         group = group_service.create_group(user, payload=payload, db=db)
-        return GroupID(
-            id=group.id
-        )
+        return DataResponse().success_response(GroupID(id=group.id))
     except Exception as e:
         logger.error("Error creating group:%s", e)
         db.rollback()
