@@ -145,7 +145,7 @@ async def websocket_endpoint(
                     sender_id=user_id,
                     content=message,
                     created_at=timestamp,
-                    message_type="text",
+                    message_type=json_data["message_type"],
                 )
                 db.add(db_message)
                 db.commit()
@@ -165,10 +165,7 @@ async def websocket_endpoint(
             #     pass
 
             else:
-                await websocket.send_text(
-                    '⚠️ We have not supported this message type yet. Please use "text"'
-                )
-                raise
+                response_data_string = json.dumps(json_data)
 
             # Forward message if target is connected
             db_group_member_target = (
