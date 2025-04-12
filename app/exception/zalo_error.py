@@ -31,3 +31,23 @@ class ZaloError(BaseError):
         code=2503,
         message="Group not found",
     )
+    GROUP_PERMISSION_DENIED = BaseError(
+        status=HTTPStatus.FORBIDDEN,
+        code=2504,
+        message="You do not have permission to access this group",
+    )
+    CANNOT_CREATE_GROUP = BaseError(
+        status=HTTPStatus.BAD_REQUEST,
+        code=2505,
+        message="Cannot create group",
+    )
+    CANNOT_ADD_MEMBER = BaseError(
+        status=HTTPStatus.BAD_REQUEST,
+        code=2506,
+        message="Cannot add member to group",
+    )
+    CANNOT_ACCESS_ADMIN_GROUP = BaseError(
+        status=HTTPStatus.FORBIDDEN,
+        code=2507,
+        message="You do not have permission to access this group",
+    )

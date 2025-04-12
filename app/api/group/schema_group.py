@@ -79,3 +79,4 @@ class UpdateGroupSimpleResponse(BaseModel):
     id: int
     group_name: str
     members: List[GroupMemberSimpleResponse]
+

@@ -21,6 +21,11 @@ class Group(BareBaseModel):
     visible = Column(Boolean, nullable=False)
 
     creator = relationship("User", back_populates="groups")
+    members = relationship(
+        "GroupMember",
+        back_populates="group",
+        cascade="all, delete-orphan",
+    )
 
 
 class GroupMember(CompositeKeyBase):
@@ -29,3 +34,6 @@ class GroupMember(CompositeKeyBase):
     group_id = Column(Integer, ForeignKey("groups.id"), primary_key=True)
     user_id = Column(Integer, ForeignKey("users.id"), primary_key=True)
     role = Column(String(20), CheckConstraint("role IN ('admin', 'member')"))
+
+    group = relationship("Group", back_populates="members")
+    user = relationship("User", back_populates="group_members")

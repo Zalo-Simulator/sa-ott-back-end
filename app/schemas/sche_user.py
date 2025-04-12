@@ -17,18 +17,19 @@ class UserBase(BaseModel):
         orm_mode = True
 
 
-
 class UserItemResponse(BaseModel):
     id: int
     full_name: str
+    avatar_url: Optional[str] = None
     is_active: bool
+
 
 class UserDetailItemResponse(UserBase):
     id: int
     phone: str
     full_name: str
     is_active: bool
-    last_login: Optional[datetime]
+    avatar_url: Optional[str] = None
 
 
 class UserCreateRequest(UserBase):
@@ -51,8 +52,5 @@ class UserUpdateMeRequest(BaseModel):
 
 class UserUpdateRequest(BaseModel):
     full_name: Optional[str]
-    password: Optional[str]
     avatar_url: Optional[str]
-    status: Optional[str]
     is_active: Optional[bool] = True
-
