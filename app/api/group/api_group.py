@@ -48,7 +48,8 @@ def create_new_group(
 @router.get("/", response_model=DataResponse[GetGroupsByUserIdResponse])
 def get_groups_by_user_id(
     page: int = Query(1, ge=0, description="Page number for pagination"),
-    limit: int = Query(10, ge=1, le=100, description="Number of items per page"),
+    limit: int = Query(
+        10, ge=1, le=100, description="Number of items per page"),
     user: User = Depends(login_required),
     db: Session = Depends(get_db),
 ) -> Any:
@@ -98,8 +99,10 @@ def get_private(
     user: User = Depends(login_required),
     db: Session = Depends(get_db),
 ):
-    user_groups = db.query(GroupMember).filter(GroupMember.user_id == user.id).all()
-    friend_groups = db.query(GroupMember).filter(GroupMember.user_id == friend_id).all()
+    user_groups = db.query(GroupMember).filter(
+        GroupMember.user_id == user.id).all()
+    friend_groups = db.query(GroupMember).filter(
+        GroupMember.user_id == friend_id).all()
 
     # Extract group_ids from GroupMember (not the record id!)
     user_group_ids = {group.group_id for group in user_groups}
