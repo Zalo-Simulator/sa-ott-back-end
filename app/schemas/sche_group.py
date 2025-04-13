@@ -1,9 +1,7 @@
-from datetime import datetime
-from typing import Optional, List 
+from typing import Optional
 
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel
 
-from app.helpers.enums import UserRole
 
 class GroupBase(BaseModel):
     name: Optional[str] = None
@@ -14,6 +12,6 @@ class GroupBase(BaseModel):
     class Config:
         orm_mode = True
 
+
 class GroupCreateRequest(GroupBase):
     pass
-

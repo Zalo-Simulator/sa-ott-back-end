@@ -9,7 +9,7 @@ from fastapi import (
     WebSocket,
     WebSocketDisconnect,
 )
-from sqlalchemy.orm import Session
+from sqlalchemy.orm.session import Session
 from app.models.model_message import MessageModel, MessageReactionModel
 from app.db.base import get_db
 from app.models.model_group import GroupMember

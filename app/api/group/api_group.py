@@ -1,20 +1,21 @@
+import logging
 from typing import Any
 
-from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, Depends, Query
+from sqlalchemy.orm.session import Session
 
 from app.api.group.schema_group import (
     CreateNewGroupRequest,
     CreateNewGroupResponse,
-    GetGroupsByUserIdResponse,
-    GroupsResponse,
-    GroupMembersResponse,
     GetGroupByGroupIdResponse,
+    GetGroupsByUserIdResponse,
+    GroupID,
+    GroupMemberSimpleResponse,
+    GroupMembersResponse,
+    GroupsResponse,
+    UpdateGroupRequest,
     UpdateGroupResponse,
     UpdateGroupSimpleResponse,
-    GroupMemberSimpleResponse,
-    UpdateGroupRequest,
-    GroupID
 )
 from app.db.base import get_db
 from app.exception.zalo_error import ZaloError
@@ -22,8 +23,10 @@ from app.helpers.login_manager import login_required
 from app.models import User
 from app.models.model_group import Group, GroupMember
 from app.schemas.sche_base import DataResponse
+from app.services.srv_group import GroupService
 
 router = APIRouter()
+logger = logging.getLogger()
 
 
 @router.post("/", response_model=DataResponse[CreateNewGroupResponse])
@@ -31,40 +34,10 @@ def create_new_group(
     payload: CreateNewGroupRequest,
     user: User = Depends(login_required),
     db: Session = Depends(get_db),
+    group_service: GroupService = Depends(),
 ) -> Any:
     try:
-        group = Group(
-            name=payload.name,
-            created_by=user.id,
-            type=payload.type,
-            visible=False if payload.type == "private" else True,
-        )
-        db.add(group)
-        db.commit()
-        db.refresh(group)
-
-        # Add group members
-        group_member = GroupMember(
-            group_id=group.id,
-            user_id=user.id,
-            role="admin",
-        )
-        db.add(group_member)
-        db.commit()
-        db.refresh(group_member)
-
-        # Add other members
-        for member_id in payload.member_ids:
-            if member_id == user.id:
-                continue
-            group_member = GroupMember(
-                group_id=group.id,
-                user_id=member_id,
-                role="member",
-            )
-            db.add(group_member)
-            db.commit()
-            db.refresh(group_member)
+        group_service.create_group(user, payload=payload, db=db)
         return DataResponse().success_response(data=CreateNewGroupResponse())
     except Exception as e:
         logger.error("Error creating group:%s", e)
@@ -117,7 +90,7 @@ def get_groups_by_user_id(
 @router.get(
     "/private/{friend_id}",
     dependencies=[Depends(login_required)],
-    response_model=DataResponse[GroupID]
+    response_model=DataResponse[GroupID],
 )
 def get_private(
     friend_id: int,
@@ -135,10 +108,14 @@ def get_private(
     # Find common group IDs
     common_group_ids = user_group_ids.intersection(friend_group_ids)
     if len(common_group_ids) > 0:
-        private_group = db.query(Group).filter(
-            Group.id.in_(list(common_group_ids)),
-            Group.type == "private"  # Assuming type is a string field
-        ).first()
+        private_group = (
+            db.query(Group)
+            .filter(
+                Group.id.in_(list(common_group_ids)),
+                Group.type == "private",  # Assuming type is a string field
+            )
+            .first()
+        )
 
         if private_group is not None:
             return DataResponse().success_response(data=GroupID(id=private_group.id))
@@ -146,7 +123,7 @@ def get_private(
     payload = CreateNewGroupRequest(
         name=f"private_group_{str(user.id)}_{str(friend_id)}",
         member_ids=[friend_id],
-        type="private"
+        type="private",
     )
     try:
         group = group_service.create_group(user, payload=payload, db=db)
@@ -214,9 +191,11 @@ def update_group(
     if not db_group:
         raise ZaloError.GROUP_NOT_FOUND.as_http_exception()
 
-    is_member = db.query(GroupMember).filter(
-        GroupMember.group_id == group_id, GroupMember.user_id == user.id
-    ).first()
+    is_member = (
+        db.query(GroupMember)
+        .filter(GroupMember.group_id == group_id, GroupMember.user_id == user.id)
+        .first()
+    )
     if not is_member:
         raise ZaloError.GROUP_PERMISSION_DENIED.as_http_exception()
 
@@ -245,14 +224,12 @@ def update_group(
                     full_name=member.full_name,
                     is_active=member.is_active,
                     is_online=getattr(member, "is_online", False),
-                    avatar_url=member.avatar_url
+                    avatar_url=member.avatar_url,
                 )
                 for member in members
-            ]
+            ],
         )
     )
-
-
 
 
 @router.post("/groups/{id}/members", response_model=DataResponse[Any], deprecated=True)
