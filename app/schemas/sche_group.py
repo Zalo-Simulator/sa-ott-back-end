@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List 
 
 from pydantic import BaseModel, EmailStr
 
@@ -16,3 +16,4 @@ class GroupBase(BaseModel):
 
 class GroupCreateRequest(GroupBase):
     pass
+

@@ -1,6 +1,6 @@
 from typing import Any
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.api.group.schema_group import (
@@ -11,6 +11,8 @@ from app.api.group.schema_group import (
     GroupMembersResponse,
     GetGroupByGroupIdResponse,
     UpdateGroupResponse,
+    UpdateGroupSimpleResponse,
+    GroupMemberSimpleResponse,
     UpdateGroupRequest,
     GroupID
 )
@@ -20,8 +22,6 @@ from app.helpers.login_manager import login_required
 from app.models import User
 from app.models.model_group import Group, GroupMember
 from app.schemas.sche_base import DataResponse
-from app.helpers.logging import logger
-from app.services.srv_group import GroupService
 
 router = APIRouter()
 
@@ -30,11 +30,41 @@ router = APIRouter()
 def create_new_group(
     payload: CreateNewGroupRequest,
     user: User = Depends(login_required),
-    group_service: GroupService = Depends(),
     db: Session = Depends(get_db),
 ) -> Any:
     try:
-        group_service.create_group(user, payload=payload, db=db)
+        group = Group(
+            name=payload.name,
+            created_by=user.id,
+            type=payload.type,
+            visible=False if payload.type == "private" else True,
+        )
+        db.add(group)
+        db.commit()
+        db.refresh(group)
+
+        # Add group members
+        group_member = GroupMember(
+            group_id=group.id,
+            user_id=user.id,
+            role="admin",
+        )
+        db.add(group_member)
+        db.commit()
+        db.refresh(group_member)
+
+        # Add other members
+        for member_id in payload.member_ids:
+            if member_id == user.id:
+                continue
+            group_member = GroupMember(
+                group_id=group.id,
+                user_id=member_id,
+                role="member",
+            )
+            db.add(group_member)
+            db.commit()
+            db.refresh(group_member)
         return DataResponse().success_response(data=CreateNewGroupResponse())
     except Exception as e:
         logger.error("Error creating group:%s", e)
@@ -173,7 +203,7 @@ def get_group_by_group_id(
     )
 
 
-@router.put("/{group_id}", response_model=DataResponse[UpdateGroupResponse])
+@router.put("/{group_id}", response_model=DataResponse[UpdateGroupSimpleResponse])
 def update_group(
     group_id: int,
     payload: UpdateGroupRequest,
@@ -184,41 +214,45 @@ def update_group(
     if not db_group:
         raise ZaloError.GROUP_NOT_FOUND.as_http_exception()
 
-    # Verify that an user is a member
-    is_member = (
-        db.query(GroupMember)
-        .filter(GroupMember.group_id == group_id, GroupMember.user_id == user.id)
-        .first()
-    )
+    is_member = db.query(GroupMember).filter(
+        GroupMember.group_id == group_id, GroupMember.user_id == user.id
+    ).first()
     if not is_member:
         raise ZaloError.GROUP_PERMISSION_DENIED.as_http_exception()
 
-    db_group.name = payload.name
-    db_group.avatar_url = payload.avatar_url
+    if payload.name:
+        db_group.name = payload.name
+    if payload.avatar_url:
+        db_group.avatar_url = payload.avatar_url
+
+    if payload.member_ids:
+        db.query(GroupMember).filter(GroupMember.group_id == group_id).delete()
+        for member_id in payload.member_ids:
+            db.add(GroupMember(group_id=group_id, user_id=member_id))
+
     db.commit()
     db.refresh(db_group)
 
+    members = db.query(User).filter(User.id.in_(payload.member_ids)).all()
+
     return DataResponse().success_response(
-        data=UpdateGroupResponse(
+        data=UpdateGroupSimpleResponse(
             id=db_group.id,
-            name=db_group.name,
-            type=db_group.type,
-            created_by=db_group.created_by,
-            visible=db_group.visible,
-            member_count=len(db_group.members),
-            avatar_url=db_group.avatar_url,
+            group_name=db_group.name,
             members=[
-                GroupMembersResponse(
-                    id=member.user_id,
-                    name=member.user.full_name,
-                    avatar_url=member.user.avatar_url,
-                    role=member.role,
-                    is_online=member.user.is_online,
+                GroupMemberSimpleResponse(
+                    id=member.id,
+                    full_name=member.full_name,
+                    is_active=member.is_active,
+                    is_online=getattr(member, "is_online", False),
+                    avatar_url=member.avatar_url
                 )
-                for member in db_group.members
-            ],
+                for member in members
+            ]
         )
     )
+
+
 
 
 @router.post("/groups/{id}/members", response_model=DataResponse[Any], deprecated=True)
