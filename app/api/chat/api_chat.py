@@ -3,7 +3,7 @@ from typing import Any, List
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm.session import Session
 
-from app.api.chat.schema_chat import (
+from app.schemas.sche_chat import (
     MessageDetailPersonSchema,
     MessageDetailReactionModel,
     MessageDetailSchema,
@@ -16,6 +16,7 @@ from app.models import User
 from app.models.model_group import GroupMember
 from app.models.model_message import MessageModel
 from app.schemas.sche_base import DataResponse
+from app.services.srv_chat import ChatService
 
 router = APIRouter()
 
@@ -27,53 +28,21 @@ router = APIRouter()
 )
 def get_chat_group(
     group_id: int,
+    chat_service: ChatService = Depends(ChatService),
     limit: int = Query(25, gt=0, le=100),  # Mặc định 100, giới hạn 0 < limit ≤ 1000
     db: Session = Depends(get_db),
     user: User = Depends(login_required),
 ) -> Any:
-    db_group = (
-        db.query(GroupMember)
-        .filter((GroupMember.group_id == group_id) & (GroupMember.user_id == user.id))
-        .first()
-    )
-    if db_group is None:
+    try:
+        res = chat_service.get_chat_group(
+            group_id=group_id,
+            db=db,
+            user=user,
+            limit=limit,
+        )
+        return DataResponse().success_response(data=res)
+    except:
         raise ZaloError.GROUP_NOT_FOUND.as_http_exception()
-
-    db_group_messages: List[MessageModel] = (
-        db.query(MessageModel)
-        .filter(MessageModel.group_id == group_id)
-        .order_by(MessageModel.created_at.desc())
-        .limit(limit)
-        .all()
-    )
-
-    return DataResponse().success_response(
-        data=[
-            MessageDetailSchema(
-                person=MessageDetailPersonSchema(
-                    id=message.sender_id,
-                    full_name=message.sender.full_name,
-                    avatar_url=message.sender.avatar_url,
-                ),
-                message_id=message.id,
-                message=message.content,
-                message_type=message.message_type,
-                attachment_id=[],  # TODO future
-                time=message.created_at,
-                reactions=[
-                    MessageDetailReactionModel(
-                        id=reaction.id,
-                        full_name=reaction.sender.full_name,
-                        avatar_url=reaction.sender.avatar_url,
-                        reaction=reaction.reaction,
-                        count=reaction.count,
-                    )
-                    for reaction in message.reactions
-                ],
-            )
-            for message in db_group_messages
-        ]
-    )
 
 
 @router.post(

@@ -3,7 +3,7 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, File, Form, UploadFile
 
-from app.api.media.schema_media import (
+from app.schemas.sche_media import (
     FileDownloadResponse,
     FileUploadResponse,
     GetPublicFileUrlResponse,
