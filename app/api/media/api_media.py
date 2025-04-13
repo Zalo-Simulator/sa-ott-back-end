@@ -3,11 +3,9 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, File, Form, UploadFile
 
-from app.api.test.schema_test import (
-    FileDownloadRequest,
+from app.api.media.schema_media import (
     FileDownloadResponse,
     FileUploadResponse,
-    GetPublicFileUrlRequest,
     GetPublicFileUrlResponse,
 )
 from app.core.config import settings
@@ -20,7 +18,7 @@ router = APIRouter()
 
 
 @router.post("/upload", response_model=DataResponse[FileUploadResponse])
-def test_upload_file(
+def media_upload_file(
     user_id: str = Form(..., min_length=1, max_length=50),
     is_public: bool = False,
     file: UploadFile = File(...),
@@ -40,7 +38,7 @@ def test_upload_file(
 @router.post(
     "/download", response_model=DataResponse[FileDownloadResponse], deprecated=True
 )
-def test_download_file(
+def media_download_file(
     s3_key: str = Form(..., min_length=1, max_length=255),
     user_id: str = Form(..., min_length=1, max_length=50),
     s3_service: S3Service = Depends(),
@@ -59,7 +57,7 @@ def test_download_file(
 @router.get(
     "/get-public-file-url", response_model=DataResponse[GetPublicFileUrlResponse]
 )
-def test_get_public_file_url(
+def media_get_public_file_url(
     s3_key: str, is_public: bool = False, s3_service: S3Service = Depends()
 ) -> Any:
     try:
