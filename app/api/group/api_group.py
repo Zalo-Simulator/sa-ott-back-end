@@ -207,7 +207,13 @@ def update_group(
     if payload.member_ids:
         db.query(GroupMember).filter(GroupMember.group_id == group_id).delete()
         for member_id in payload.member_ids:
-            db.add(GroupMember(group_id=group_id, user_id=member_id))
+            db.add(
+                GroupMember(
+                    group_id=group_id,
+                    user_id=member_id,
+                    role="admin" if member_id == db_group.creator.id else "member",
+                )
+            )
 
     db.commit()
     db.refresh(db_group)
