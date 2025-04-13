@@ -51,3 +51,8 @@ class ZaloError(BaseError):
         code=2507,
         message="You do not have permission to access this group",
     )
+    CANNOT_UPDATE_GROUP = BaseError(
+        status=HTTPStatus.BAD_REQUEST,
+        code=2508,
+        message="Cannot update group",
+    )
