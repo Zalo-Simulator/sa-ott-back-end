@@ -1,7 +1,7 @@
 from typing import Any, List
 
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy.orm import Session
+from sqlalchemy.orm.session import Session
 
 from app.api.chat.schema_chat import (
     MessageDetailPersonSchema,

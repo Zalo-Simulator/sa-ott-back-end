@@ -1,29 +1,14 @@
-from typing import Any
 import logging
 
-from fastapi import APIRouter, Depends, Query
 from fastapi.security import HTTPBearer
-
-from sqlalchemy.orm import Session
+from sqlalchemy.orm.session import Session
 
 from app.api.group.schema_group import (
     CreateNewGroupRequest,
-    CreateNewGroupResponse,
-    GetGroupsByUserIdResponse,
-    GroupsResponse,
-    GroupMembersResponse,
-    GetGroupByGroupIdResponse,
-    UpdateGroupResponse,
-    UpdateGroupRequest,
-    GroupID
 )
-from app.db.base import get_db
 from app.exception.zalo_error import ZaloError
-from app.helpers.login_manager import login_required
 from app.models import User
 from app.models.model_group import Group, GroupMember
-from app.schemas.sche_base import DataResponse
-from app.helpers.logging import logger 
 
 logger = logging.getLogger()
 
@@ -35,9 +20,9 @@ class GroupService(object):
 
     def __init__(self) -> None:
         pass
-    
+
     @staticmethod
-    def create_group(user, payload: CreateNewGroupRequest, db):
+    def create_group(user: User, payload: CreateNewGroupRequest, db: Session):
         try:
             group = Group(
                 name=payload.name,
