@@ -56,3 +56,8 @@ class ZaloError(BaseError):
         code=2508,
         message="Cannot update group",
     )
+    USER_NOT_FOUND = BaseError(
+        status=HTTPStatus.NOT_FOUND,
+        code=2509,
+        message="User not found",
+    )

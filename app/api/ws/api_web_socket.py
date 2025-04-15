@@ -1,7 +1,7 @@
 import json
 import logging
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, TypedDict
 
 from fastapi import (
     APIRouter,
@@ -10,10 +10,12 @@ from fastapi import (
     WebSocketDisconnect,
 )
 from sqlalchemy.orm.session import Session
-from app.models.model_message import MessageModel, MessageReactionModel
+
 from app.db.base import get_db
+from app.exception.zalo_error import ZaloError
+from app.models import User
 from app.models.model_group import GroupMember
-from typing import TypedDict
+from app.models.model_message import MessageModel, MessageReactionModel
 
 # Store active WebSocket connections mapped by user ID
 clients: Dict[int, WebSocket] = {}
@@ -46,6 +48,14 @@ async def websocket_endpoint(
 ):
     await websocket.accept()
     clients[user_id] = websocket
+    current_user = db.query(User).filter(User.id == user_id).first()
+    if not current_user:
+        raise ZaloError.USER_NOT_FOUND.as_http_exception()
+
+    current_user.is_online = True
+    db.commit()
+    db.refresh(current_user)
+
     # user_status[user_id] = True
     logger.info(f"✅ User {user_id} connected! Online status updated.")
 
@@ -195,3 +205,6 @@ async def websocket_endpoint(
         logger.error(f"❌ User {user_id} disconnected!")
         # user_status[user_id] = False
         clients.pop(user_id, None)
+        current_user.is_online = False
+        db.commit()
+        db.refresh(current_user)
