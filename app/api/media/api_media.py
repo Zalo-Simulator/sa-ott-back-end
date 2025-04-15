@@ -3,7 +3,8 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, File, Form, UploadFile
 from sqlalchemy.orm.session import Session
-
+from app.helpers.login_manager import login_required
+from app.models import User
 from app.api.media.schema_media import (
     FileDownloadResponse,
     FileUploadResponse,
@@ -23,14 +24,14 @@ router = APIRouter()
 
 @router.get("/me", response_model=DataResponse[GetPublicFileUrlsResponse])
 def get_all_user_media(
-    user_id: str = Form(..., min_length=1, max_length=50),
+    user: User = Depends(login_required),
     s3_service: S3Service = Depends(),
     db: Session = Depends(get_db),
 ) -> Any:
     list_media = (
         db.query(MessageModel)
         .filter(
-            (MessageModel.sender_id == user_id)
+            (MessageModel.sender_id == user.id)
             & (~MessageModel.message_type.in_(["text", "sticker"]))
         )
         .all()
@@ -51,14 +52,14 @@ def get_all_user_media(
 
 @router.post("/upload", response_model=DataResponse[FileUploadResponse])
 def media_upload_file(
-    user_id: str = Form(..., min_length=1, max_length=50),
+    user: User = Depends(login_required),
     is_public: bool = False,
     file: UploadFile = File(...),
     s3_service: S3Service = Depends(),
 ) -> Any:
     # Không thể để UploadFile trong BaseModel vì nó không phải là kiểu JSON.
     try:
-        s3_key = s3_service.upload(file=file, user_id=user_id, is_public=is_public)
+        s3_key = s3_service.upload(file=file, user_id=user.id, is_public=is_public)
         s3_object = S3DocumentSchema(s3_key=s3_key, document_id=uuid.uuid4())
         return DataResponse().success_response(
             data=FileUploadResponse(key=s3_object.s3_key)
