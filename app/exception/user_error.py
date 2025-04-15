@@ -31,9 +31,13 @@ class UserError(BaseError):
         code=1103,
         message="Cannot add contact",
     )
-
     CANNOT_GET_USER_PENDING_CONTACTS = BaseError(
         status=HTTPStatus.BAD_REQUEST,
         code=1104,
         message="Cannot get user pending contacts",
+    )
+    CANNOT_GET_USER_CONTACTS = BaseError(
+        status=HTTPStatus.BAD_REQUEST,
+        code=1105,
+        message="Cannot get user contacts",
     )
