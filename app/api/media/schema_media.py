@@ -1,5 +1,6 @@
+from typing import List, Union
+
 from pydantic import BaseModel, Field
-from typing import Union
 
 
 class FileDownloadRequest(BaseModel):
@@ -21,3 +22,7 @@ class GetPublicFileUrlRequest(BaseModel):
 
 class GetPublicFileUrlResponse(BaseModel):
     url: str
+
+
+class GetPublicFileUrlsResponse(BaseModel):
+    urls: List[GetPublicFileUrlResponse]
