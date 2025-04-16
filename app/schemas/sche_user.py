@@ -9,7 +9,7 @@ from app.helpers.enums import UserRole
 class UserBase(BaseModel):
     full_name: Optional[str] = None
     phone: Optional[str] = None
-    status: Optional[str] = 'Available'
+    status: Optional[str] = "Available"
     is_active: Optional[bool] = True
     avatar_url: Optional[str] = None
 
@@ -22,6 +22,7 @@ class UserItemResponse(BaseModel):
     full_name: str
     avatar_url: Optional[str] = None
     is_active: bool
+    is_online: bool = False
 
 
 class UserDetailItemResponse(UserBase):

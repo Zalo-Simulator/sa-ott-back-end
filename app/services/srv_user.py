@@ -16,7 +16,6 @@ from app.models.model_friend import Friend
 from app.schemas.sche_friend import (
     FriendSchemaResponse,
     FriendsListResponse,
-    UpdateFriendRequest,
 )
 from app.schemas.sche_token import TokenPayload
 from app.schemas.sche_user import (
@@ -94,6 +93,7 @@ class UserService(object):
             id=register_user.id,
             full_name=register_user.full_name,
             is_active=register_user.is_active,
+            is_online=register_user.is_online,
         )
 
     @staticmethod
@@ -118,7 +118,9 @@ class UserService(object):
             raise AuthenticationError.USER_NOT_FOUND.as_http_exception()
         user.full_name = user.full_name if data.full_name is None else data.full_name
         user.is_active = user.is_active if data.is_active is None else data.is_active
-        user.avatar_url = user.avatar_url if data.avatar_url is None else data.avatar_url
+        user.avatar_url = (
+            user.avatar_url if data.avatar_url is None else data.avatar_url
+        )
 
         db.session.commit()
         return UserItemResponse(
@@ -126,25 +128,32 @@ class UserService(object):
             full_name=user.full_name,
             is_active=user.is_active,
             avatar_url=user.avatar_url,
+            is_online=user.is_online,
         )
 
     @staticmethod
     def search_user(text: str):
         search_text = f"%{text.lower()}%"  # wildcard for LIKE
 
-        user_list = db.session.query(User).filter(
-            or_(
-                User.full_name.ilike(search_text),
-                User.phone.ilike(search_text),
+        user_list = (
+            db.session.query(User)
+            .filter(
+                or_(
+                    User.full_name.ilike(search_text),
+                    User.phone.ilike(search_text),
+                )
             )
-        ).all()
+            .all()
+        )
         return [
             UserItemResponse(
                 id=user.id,
                 full_name=user.full_name,
                 is_active=user.is_active,
                 avatar_url=user.avatar_url,
-            ) for user in user_list
+                is_online=user.is_online,
+            )
+            for user in user_list
         ]
 
     @staticmethod
@@ -190,6 +199,7 @@ class UserService(object):
             avatar_url=exist_user.avatar_url,
             full_name=exist_user.full_name,
             is_active=exist_user.is_active,
+            is_online=exist_user.is_online,
         )
 
     @staticmethod
@@ -209,19 +219,20 @@ class UserService(object):
             friend.friend_id for friend in friends if friend.friend_id != user_id
         ]
         user_id = list(set(user_id))
-        contacts = db.session.query(User).filter(User.id.in_(user_id)).all()
-        if contacts is None:
+        friends = db.session.query(User).filter(User.id.in_(user_id)).all()
+        if friends is None:
             raise AuthenticationError.USER_NOT_FOUND.as_http_exception()
 
         return FriendsListResponse(
             friends=[
                 UserItemResponse(
-                    id=contact.id,
-                    full_name=contact.full_name,
-                    avatar_url=contact.avatar_url,
-                    is_active=contact.is_active,
+                    id=friend.id,
+                    full_name=friend.full_name,
+                    avatar_url=friend.avatar_url,
+                    is_active=friend.is_active,
+                    is_online=friend.is_online,
                 )
-                for contact in contacts
+                for friend in friends
             ]
         )
 
@@ -266,27 +277,30 @@ class UserService(object):
             raise FriendError.CANNOT_GET_FRIEND_LIST.as_http_exception()
         friend_id = [friend.user_id for friend in friends]
         friend_id = list(set(friend_id))
-        contacts = db.session.query(User).filter(User.id.in_(friend_id)).all()
-        if contacts is None:
+        friends = db.session.query(User).filter(User.id.in_(friend_id)).all()
+        if friends is None:
             raise AuthenticationError.USER_NOT_FOUND.as_http_exception()
         return FriendsListResponse(
             friends=[
                 UserItemResponse(
-                    id=contact.id,
-                    full_name=contact.full_name,
-                    avatar_url=contact.avatar_url,
-                    is_active=contact.is_active,
+                    id=friend.id,
+                    full_name=friend.full_name,
+                    avatar_url=friend.avatar_url,
+                    is_active=friend.is_active,
+                    is_online=friend.is_online,
                 )
-                for contact in contacts
+                for friend in friends
             ]
         )
 
     @staticmethod
-    def update_friend_request(user_id: int , friend_id: int):
+    def update_friend_request(user_id: int, friend_id: int):
         current_friend = (
             db.session.query(Friend)
-            .filter((Friend.user_id == user_id) & (Friend.friend_id == friend_id) |
-                    (Friend.friend_id == user_id) & (Friend.user_id == friend_id))
+            .filter(
+                (Friend.user_id == user_id) & (Friend.friend_id == friend_id)
+                | (Friend.friend_id == user_id) & (Friend.user_id == friend_id)
+            )
             .first()
         )
         if current_friend is None:
@@ -299,8 +313,10 @@ class UserService(object):
     def delete_friend(user_id: int, friend_id: int):
         current_friend = (
             db.session.query(Friend)
-            .filter((Friend.user_id == user_id) & (Friend.friend_id == friend_id) |
-                    (Friend.friend_id == user_id) & (Friend.user_id == friend_id))
+            .filter(
+                (Friend.user_id == user_id) & (Friend.friend_id == friend_id)
+                | (Friend.friend_id == user_id) & (Friend.user_id == friend_id)
+            )
             .first()
         )
         if current_friend is None:

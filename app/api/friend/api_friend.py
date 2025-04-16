@@ -1,28 +1,18 @@
 import logging
-from typing import Any, List
+from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException
-from fastapi_sqlalchemy import db
+from fastapi import APIRouter, Depends
 
-from app.exception.friend_error import FriendError
-from app.helpers.login_manager import login_required, PermissionRequired
-from app.helpers.paging import Page, PaginationParams, paginate
-from app.schemas.sche_base import DataResponse
-from app.schemas.sche_friend import (
-    FriendSchemaResponse,
-    CreateFriendRequest,
-    UpdateFriendRequest,
-    FriendsListResponse
-    
-)
-from app.services.srv_friend import FriendService
-from app.models import Friend, User
-from app.services.srv_user import UserService
 from app.exception.user_error import UserError
-
+from app.helpers.login_manager import login_required
+from app.models import User
+from app.schemas.sche_base import DataResponse
+from app.schemas.sche_friend import FriendSchemaResponse, FriendsListResponse
+from app.services.srv_user import UserService
 
 logger = logging.getLogger()
 router = APIRouter()
+
 
 @router.get(
     "/",
@@ -30,8 +20,7 @@ router = APIRouter()
     response_model=DataResponse[FriendsListResponse],
 )
 def get_user_contacts(
-    user: User = Depends(login_required),
-    user_service: UserService = Depends()
+    user: User = Depends(login_required), user_service: UserService = Depends()
 ) -> Any:
     """
     API Get User's contacts
@@ -49,8 +38,7 @@ def get_user_contacts(
     response_model=DataResponse[FriendsListResponse],
 )
 def get_user_pending_contacts(
-    user: User = Depends(login_required),
-    user_service: UserService = Depends()
+    user: User = Depends(login_required), user_service: UserService = Depends()
 ) -> Any:
     """
     API Get User's pending contacts
@@ -70,7 +58,7 @@ def get_user_pending_contacts(
 def add_contact(
     friend_id: int,
     user: User = Depends(login_required),
-    user_service: UserService = Depends()
+    user_service: UserService = Depends(),
 ) -> Any:
     """
     API Add contact
@@ -80,7 +68,7 @@ def add_contact(
         return DataResponse().success_response(data=contact)
     except Exception:
         raise UserError.CANNOT_ADD_CONTACT.as_http_exception()
-    
+
 
 @router.put(
     "/{friend_id}",
@@ -89,7 +77,7 @@ def add_contact(
 def update_friend(
     friend_id: int,
     user: User = Depends(login_required),
-    user_service: UserService = Depends()
+    user_service: UserService = Depends(),
 ) -> Any:
     try:
         contact = user_service.update_friend_request(int(user.id), friend_id)
@@ -105,7 +93,7 @@ def update_friend(
 def delete_friend(
     friend_id: int,
     user: User = Depends(login_required),
-    user_service: UserService = Depends()
+    user_service: UserService = Depends(),
 ) -> Any:
     """
     API Add contact

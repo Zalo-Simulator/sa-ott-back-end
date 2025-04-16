@@ -2,14 +2,19 @@ import uuid
 from typing import Any
 
 from fastapi import APIRouter, Depends, File, Form, UploadFile
-
+from sqlalchemy.orm.session import Session
+from app.helpers.login_manager import login_required
+from app.models import User
 from app.api.media.schema_media import (
     FileDownloadResponse,
     FileUploadResponse,
     GetPublicFileUrlResponse,
+    GetPublicFileUrlsResponse,
 )
 from app.core.config import settings
+from app.db.base import get_db
 from app.exception.zalo_error import ZaloError
+from app.models.model_message import MessageModel
 from app.schemas.sche_base import DataResponse
 from app.services.aws.s3.s3 import S3Service
 from app.services.aws.s3.schema import S3DocumentSchema
@@ -17,16 +22,44 @@ from app.services.aws.s3.schema import S3DocumentSchema
 router = APIRouter()
 
 
+@router.get("/me", response_model=DataResponse[GetPublicFileUrlsResponse])
+def get_all_user_media(
+    user: User = Depends(login_required),
+    s3_service: S3Service = Depends(),
+    db: Session = Depends(get_db),
+) -> Any:
+    list_media = (
+        db.query(MessageModel)
+        .filter(
+            (MessageModel.sender_id == user.id)
+            & (~MessageModel.message_type.in_(["text", "sticker"]))
+        )
+        .all()
+    )
+    return DataResponse().success_response(
+        data=GetPublicFileUrlsResponse(
+            urls=[
+                GetPublicFileUrlResponse(
+                    url=str(
+                        s3_service.generate_s3_url(key=media.content, is_public=True)
+                    )
+                )
+                for media in list_media
+            ]
+        )
+    )
+
+
 @router.post("/upload", response_model=DataResponse[FileUploadResponse])
 def media_upload_file(
-    user_id: str = Form(..., min_length=1, max_length=50),
+    user: User = Depends(login_required),
     is_public: bool = False,
     file: UploadFile = File(...),
     s3_service: S3Service = Depends(),
 ) -> Any:
     # Không thể để UploadFile trong BaseModel vì nó không phải là kiểu JSON.
     try:
-        s3_key = s3_service.upload(file=file, user_id=user_id, is_public=is_public)
+        s3_key = s3_service.upload(file=file, user_id=user.id, is_public=is_public)
         s3_object = S3DocumentSchema(s3_key=s3_key, document_id=uuid.uuid4())
         return DataResponse().success_response(
             data=FileUploadResponse(key=s3_object.s3_key)

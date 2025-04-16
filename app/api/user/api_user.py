@@ -1,26 +1,19 @@
 import logging
 from typing import Any, List
 
-from fastapi import APIRouter, Depends, HTTPException, Query
-from fastapi_sqlalchemy import db
+from fastapi import APIRouter, Depends, Query
 
-from app.helpers.exception_handler import CustomException
-from app.helpers.login_manager import login_required, PermissionRequired
-from app.helpers.paging import Page, PaginationParams, paginate
+from app.exception.user_error import UserError
+from app.helpers.login_manager import login_required
+from app.models import User
 from app.schemas.sche_base import DataResponse
+from app.schemas.sche_friend import FriendSchemaResponse, FriendsListResponse
 from app.schemas.sche_user import (
-    UserItemResponse,
     UserDetailItemResponse,
-    UserCreateRequest,
-    UserUpdateMeRequest,
+    UserItemResponse,
     UserUpdateRequest,
 )
-from app.schemas.sche_friend import FriendsListResponse, FriendSchemaResponse
 from app.services.srv_user import UserService
-from app.services.srv_friend import FriendService
-from app.models import User
-from app.services.srv_user import UserService
-from app.exception.user_error import UserError
 
 logger = logging.getLogger()
 router = APIRouter()
