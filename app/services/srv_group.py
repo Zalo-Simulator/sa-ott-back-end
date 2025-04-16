@@ -32,13 +32,15 @@ class GroupService(object):
         pass
 
     @staticmethod
-    def get_group_by_user(user_id: int, page, limit, db: Session):
+    def get_group_by_user(user_id: int, page: int, limit: int, db: Session):
         db_group_members = (
             db.query(GroupMember)
             .filter(GroupMember.user_id == user_id)
             .order_by(GroupMember.updated_at.desc())  # sort theo updated_at mới nhất
             .limit(limit)
-            .offset(page)
+            .offset(
+                page
+            )  # FIXED! chỗ này page mặt định phải là 0. Nếu không nó sẽ skip qua `page` groups
             .all()
         )
         return GetGroupsByUserIdResponse(
