@@ -13,6 +13,7 @@ from sqlalchemy.orm.session import Session
 
 from app.db.base import get_db
 from app.exception.zalo_error import ZaloError
+from app.helpers.login_manager import login_required
 from app.models import User
 from app.models.model_group import GroupMember
 from app.models.model_message import MessageModel, MessageReactionModel
@@ -45,11 +46,12 @@ async def websocket_endpoint(
     db: Session = Depends(get_db),
     q: Optional[int] = None,
     cookie_or_token: Optional[str] = None,
+    current_user: User = Depends(login_required),
 ):
     await websocket.accept()
     clients[user_id] = websocket
-    current_user = db.query(User).filter(User.id == user_id).first()
-    if not current_user:
+
+    if current_user.id != user_id:
         raise ZaloError.USER_NOT_FOUND.as_http_exception()
 
     current_user.is_online = True
