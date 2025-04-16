@@ -36,6 +36,7 @@ class GroupService(object):
         db_group_members = (
             db.query(GroupMember)
             .filter(GroupMember.user_id == user_id)
+            .order_by(GroupMember.updated_at.desc())  # sort theo updated_at mới nhất
             .limit(limit)
             .offset(page)
             .all()
@@ -67,10 +68,10 @@ class GroupService(object):
 
     @staticmethod
     def get_private(user: User, friend_id, db: Session):
-        user_groups = db.query(GroupMember).filter(
-            GroupMember.user_id == user.id).all()
-        friend_groups = db.query(GroupMember).filter(
-            GroupMember.user_id == friend_id).all()
+        user_groups = db.query(GroupMember).filter(GroupMember.user_id == user.id).all()
+        friend_groups = (
+            db.query(GroupMember).filter(GroupMember.user_id == friend_id).all()
+        )
 
         # Extract group_ids from GroupMember (not the record id!)
         user_group_ids = {group.group_id for group in user_groups}
@@ -105,7 +106,7 @@ class GroupService(object):
             raise ZaloError.CANNOT_ADD_MEMBER.as_http_exception()
 
     @staticmethod
-    def get_group_by_group_id(user:User, group_id: int, db: Session):
+    def get_group_by_group_id(user: User, group_id: int, db: Session):
         db_group = db.query(Group).filter(Group.id == group_id).first()
         if not db_group:
             raise ZaloError.GROUP_NOT_FOUND.as_http_exception()
@@ -113,46 +114,46 @@ class GroupService(object):
         if not db_group.visible:  # if it is a private group and user is not a member
             is_member = (
                 db.query(GroupMember)
-                .filter(GroupMember.group_id == group_id, GroupMember.user_id == user.id)
+                .filter(
+                    GroupMember.group_id == group_id, GroupMember.user_id == user.id
+                )
                 .first()
             )
             if not is_member:
                 raise ZaloError.GROUP_PERMISSION_DENIED.as_http_exception()
 
         db_group_members = (
-            db.query(GroupMember).filter(
-                GroupMember.group_id == group_id).all()
+            db.query(GroupMember).filter(GroupMember.group_id == group_id).all()
         )
 
         return GetGroupByGroupIdResponse(
-                id=db_group.id,
-                name=db_group.name,
-                type=db_group.type,
-                created_by=db_group.created_by,
-                visible=db_group.visible,
-                member_count=len(db_group_members),
-                avatar_url=db_group.avatar_url,
-                members=[
-                    GroupMembersResponse(
-                        id=member.user_id,
-                        name=member.user.full_name,
-                        avatar_url=member.user.avatar_url,
-                        role=member.role,
-                        is_online=member.user.is_online,
-                    )
-                    for member in db_group_members
-                ],
-            )
-        
+            id=db_group.id,
+            name=db_group.name,
+            type=db_group.type,
+            created_by=db_group.created_by,
+            visible=db_group.visible,
+            member_count=len(db_group_members),
+            avatar_url=db_group.avatar_url,
+            members=[
+                GroupMembersResponse(
+                    id=member.user_id,
+                    name=member.user.full_name,
+                    avatar_url=member.user.avatar_url,
+                    role=member.role,
+                    is_online=member.user.is_online,
+                )
+                for member in db_group_members
+            ],
+        )
 
-    @ staticmethod
+    @staticmethod
     def create_group(user: User, payload: CreateNewGroupRequest, db: Session):
         try:
-            group= Group(
-                name = payload.name,
-                created_by = user.id,
-                type = payload.type,
-                visible = False if payload.type == "private" else True,
+            group = Group(
+                name=payload.name,
+                created_by=user.id,
+                type=payload.type,
+                visible=False if payload.type == "private" else True,
             )
             db.add(group)
             db.commit()
@@ -234,17 +235,16 @@ class GroupService(object):
         members = db.query(User).filter(User.id.in_(payload.member_ids)).all()
 
         return UpdateGroupSimpleResponse(
-                id=db_group.id,
-                group_name=db_group.name,
-                members=[
-                    GroupMemberSimpleResponse(
-                        id=member.id,
-                        full_name=member.full_name,
-                        is_active=member.is_active,
-                        is_online=getattr(member, "is_online", False),
-                        avatar_url=member.avatar_url,
-                    )
-                    for member in members
-                ],
-            )
-        
+            id=db_group.id,
+            group_name=db_group.name,
+            members=[
+                GroupMemberSimpleResponse(
+                    id=member.id,
+                    full_name=member.full_name,
+                    is_active=member.is_active,
+                    is_online=getattr(member, "is_online", False),
+                    avatar_url=member.avatar_url,
+                )
+                for member in members
+            ],
+        )

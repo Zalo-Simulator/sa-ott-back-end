@@ -11,13 +11,13 @@ class GetChatGroupRequest(BaseModel):
 class MessageDetailPersonSchema(BaseModel):
     id: int
     full_name: Optional[str] = Field(..., min_length=1, max_length=100)
-    avatar_url: Optional[str] = Field(..., min_length=1, max_length=200)
+    avatar_url: Optional[str] = Field(..., min_length=0, max_length=200)
 
 
 class MessageDetailReactionModel(BaseModel):
     id: int
     full_name: Optional[str] = Field(..., min_length=1, max_length=100)
-    avatar_url: Optional[str] = Field(..., min_length=1, max_length=200)
+    avatar_url: Optional[str] = Field(..., min_length=0, max_length=200)
     reaction: str
     count: int
 

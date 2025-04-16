@@ -198,12 +198,20 @@ async def websocket_endpoint(
                 if target_id in clients:
                     await clients[target_id].send_text(response_data_string)
                     logger.info(f"📤 Sent to {group_id}: {response_data_string}")
+
+                    # Update latest message
+                    if "db_message" in locals():
+                        member.updated_at = db_message.created_at
+                        db.commit()
+                        db.refresh(member)
                 else:
                     logger.info(f"⚠️ User {group_id} is offline. Message not delivered.")
 
-    except WebSocketDisconnect:
-        logger.error(f"❌ User {user_id} disconnected!")
-        # user_status[user_id] = False
+    except WebSocketDisconnect as e:
+        logger.error(f"❌ User {user_id} disconnected! due to {e}")
+    except Exception as e:
+        logger.error(f"❌ Something error due to {e}")
+    finally:
         clients.pop(user_id, None)
         current_user.is_online = False
         db.commit()
