@@ -11,7 +11,6 @@ env:
   USER: "ubuntu"
   REPO_URL: "git@github.com:${{ github.repository }}.git"
   PROJECT_DIR: "/home/ubuntu/app"
-  LOCALSTACK_AUTH_TOKEN: ${{ secrets.LOCALSTACK_AUTH_TOKEN }}
 
 jobs:
   deploy:
@@ -25,7 +24,6 @@ jobs:
           echo "REPO_URL=${{ env.REPO_URL }}" > .env
           echo "PROJECT_DIR=${{ env.PROJECT_DIR }}" >> .env
           echo "AWS_EXTERNAL_ENDPOINT_URL=http://${{ env.HOST }}:4566" >> .env
-          echo "LOCALSTACK_AUTH_TOKEN=${{ env.LOCALSTACK_AUTH_TOKEN }}" >> .env
       
       - name: Upload environment file to EC2
         run: |
