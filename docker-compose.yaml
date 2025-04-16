@@ -22,7 +22,6 @@ services:
     networks:
       - zalo_net
 
-
   alembic:
     image: fastapi-base:latest
     user: root  # Chạy container với user root
@@ -41,16 +40,25 @@ services:
       - zalo_net
         
   localstack:
+  # Please read this documentation first -> https://docs.localstack.cloud/user-guide/aws/s3/#s3-docker-image
+  # You have to use localstack-pro to keep local data safety
+  # Moreover, you need LOCALSTACK_AUTH_TOKEN to start a container:
+  # Follow this documentation: https://docs.localstack.cloud/getting-started/auth-token/
+  # Quick start: go to https://app.localstack.cloud/settings/auth-tokens
     container_name: zalo_localstack
-    image: localstack/localstack
+    image: localstack/localstack-pro
     ports:
-      - "4566:4566"  # Chỉ cần mở port 4566
+      - "127.0.0.1:4566:4566"            # LocalStack Gateway
+      - "127.0.0.1:4510-4559:4510-4559"  # external services port range
     environment:
+      # LocalStack configuration: https://docs.localstack.cloud/references/configuration/
       - DEBUG=${DEBUG:-0}
       - SERVICES=s3
-      - EDGE_PORT=4566
+      - PERSISTENCE=1                    # ✅ Enable persistence
+      - DASHBOARD=1
+      - LOCALSTACK_AUTH_TOKEN=${LOCALSTACK_AUTH_TOKEN:-ls-MAnEDEbu-2002-dfna-qera-31239hg1f}
     volumes:
-      - localstack_data:/var/lib/localstack
+      - localstack_data:/var/lib/localstack   # ✅ Data is stored here
       - "/var/run/docker.sock:/var/run/docker.sock"
       - "./scripts/s3_bootstrap.sh:/etc/localstack/init/ready.d/s3_bootstrap.sh"
     networks:
