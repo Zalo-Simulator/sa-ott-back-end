@@ -29,7 +29,7 @@ logger = logging.getLogger()
 
 
 @router.post(
-    "/",
+    "",
     dependencies=[Depends(login_required)],
     response_model=DataResponse[CreateNewGroupResponse],
 )
@@ -49,7 +49,7 @@ def create_new_group(
 
 
 @router.get(
-    "/",
+    "",
     dependencies=[Depends(login_required)],
     response_model=DataResponse[GetGroupsByUserIdResponse],
 )

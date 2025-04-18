@@ -72,7 +72,7 @@ def update_user(
 
 
 @router.get(
-    "/",
+    "",
     dependencies=[Depends(login_required)],
     response_model=DataResponse[List[UserItemResponse]],
 )

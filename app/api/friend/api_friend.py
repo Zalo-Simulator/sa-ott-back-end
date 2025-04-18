@@ -15,7 +15,7 @@ router = APIRouter()
 
 
 @router.get(
-    "/",
+    "",
     dependencies=[Depends(login_required)],
     response_model=DataResponse[FriendsListResponse],
 )
