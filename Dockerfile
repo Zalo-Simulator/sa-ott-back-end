@@ -24,6 +24,9 @@ RUN apt-get update && \
     apt-get remove -y gcc && apt-get autoremove -y && \
     rm -rf /var/lib/apt/lists/*
 
+# `pytest` confict to `py` package
+RUN pip uninstall -y py
+
 # Copy source code
 COPY . .
 
