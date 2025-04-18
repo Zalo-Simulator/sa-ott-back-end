@@ -134,3 +134,14 @@ def downgrade():
     # ### end Alembic commands ###
 ...
 ```
+
+## Test
+If you try to run test. Please remove `py` package out of `pytest` as suggestion in this comment https://github.com/pytest-dev/pytest/issues/9181#issuecomment-1513234948
+```bash
+pip uninstall -y py
+```
+How to run pytest?
+You can do that in `Exec` tab inside Docker's container named `fastapi_app`
+```bash
+pytest app -v --anyio-backends=asyncio
+```
